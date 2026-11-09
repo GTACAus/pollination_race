@@ -206,6 +206,7 @@ function bindButtons() {
         }
         repairPanel.classList.remove('hidden');
         locationStage.classList.add('is-paused');
+        freezeTruck();
         renderRepairActions();
       } else {
         closeRepairPanel();
@@ -1314,11 +1315,58 @@ function createVehicleRig(vehicleId, { journey = false, interactive = false } = 
   return rig;
 }
 
+// ---------- Journey truck movement ----------
+// The truck (plus its crew badges) lives in a "mover" that game.js positions:
+// parked on arrival, then driving steadily left → right through each travel
+// slice and off the right edge, before driving into the next scene.
+const TRUCK_PARK_LEFT = 9;
+const TRUCK_EXIT_LEFT = 104;
+const TRAVEL_SLICE_MS = 1100;
+const TRUCK_DRIVE_IN_MS = 1800;
+const MAX_TRAVEL_EVENTS_PER_SEGMENT = 2;
+
 function renderJourneyTransporter() {
-  journeyTruckTrack.replaceChildren(
-    createVehicleRig(gameData.selectedVehicle, { journey: true })
-  );
+  const mover = document.createElement('div');
+  mover.className = 'journey-truck-mover';
+  mover.id = 'journey-truck-mover';
+  const badges = document.getElementById('truck-pollinator-badges');
+  if (badges) mover.appendChild(badges);
+  mover.appendChild(createVehicleRig(gameData.selectedVehicle, { journey: true }));
+  journeyTruckTrack.replaceChildren(mover);
+  setTruckLeft(TRUCK_PARK_LEFT, 0);
   updateTransporterAppearance();
+}
+
+function setTruckLeft(pct, durationMs = 0) {
+  const mover = document.getElementById('journey-truck-mover');
+  if (!mover) return;
+  mover.style.transitionDuration = `${gameData.reducedMotion ? 0 : durationMs}ms`;
+  mover.style.left = `${pct}%`;
+}
+
+/** Stop the truck exactly where it is (events, repairs). */
+function freezeTruck() {
+  const mover = document.getElementById('journey-truck-mover');
+  if (!mover) return;
+  const track = journeyTruckTrack.getBoundingClientRect();
+  if (!track.width) return;
+  const current = (mover.getBoundingClientRect().left - track.left) / track.width * 100;
+  setTruckLeft(current, 0);
+}
+
+function truckDriveIn() {
+  const mover = document.getElementById('journey-truck-mover');
+  if (!mover) return;
+  const track = journeyTruckTrack.getBoundingClientRect();
+  const widthPct = track.width ? mover.getBoundingClientRect().width / track.width * 100 : 70;
+  setTruckLeft(-widthPct - 4, 0);
+  void mover.offsetWidth;
+  setTruckLeft(TRUCK_PARK_LEFT, TRUCK_DRIVE_IN_MS);
+}
+
+function truckLeftForSlice(sliceIndex) {
+  const progress = Math.max(0, Math.min(1, sliceIndex / SIMULATION_RULES.travelSlicesPerSegment));
+  return TRUCK_PARK_LEFT + (TRUCK_EXIT_LEFT - TRUCK_PARK_LEFT) * progress;
 }
 
 function updateTransporterAppearance() {
@@ -1681,6 +1729,7 @@ function advanceTravelSlice() {
   gameData.elapsedJourneyHours += sliceHours;
   gameData.segmentSliceIndex += 1;
   gameData.currentWeather = '';
+  setTruckLeft(truckLeftForSlice(gameData.segmentSliceIndex), TRAVEL_SLICE_MS);
 
   routeStatus.innerHTML = `
     <p><strong>Travelling to:</strong> ${destination.region}</p>
@@ -1697,9 +1746,10 @@ function advanceTravelSlice() {
   refreshJourneyStatus();
   if (checkMissionFailure('during travel')) return;
 
-  const isOpportunity = gameData.scheduledEventSlices.includes(gameData.segmentSliceIndex - 1);
+  const isOpportunity = gameData.scheduledEventSlices.includes(gameData.segmentSliceIndex - 1) &&
+    gameData.segmentEventIds.size < MAX_TRAVEL_EVENTS_PER_SEGMENT;
   if (isOpportunity && tryTriggerPhaseEvent('travel', destination, origin)) return;
-  scheduleJourney(120);
+  scheduleJourney(TRAVEL_SLICE_MS / JOURNEY_PACE);
 }
 
 function completeTravelSegment() {
@@ -1715,7 +1765,8 @@ function completeTravelSegment() {
   refreshJourneyStatus();
   if (checkMissionFailure('on arrival')) return;
   addLogEntry(`Arrived at ${stop.region}. Transporter health: ${gameData.vehicleHealth}%.`);
-  scheduleJourney(150);
+  truckDriveIn();
+  scheduleJourney((TRUCK_DRIVE_IN_MS + 600) / JOURNEY_PACE);
 }
 
 function tryTriggerPhaseEvent(phase, location) {
@@ -1896,6 +1947,7 @@ function showEvent(event, stop) {
   eventDescription.textContent = `${event.description} Your transporter is at ${stop.region}.`;
   eventPopup.classList.remove('hidden');
   locationStage.classList.add('is-paused');
+  freezeTruck();
   eventImage.src = pickEventImage(event);
   eventImage.alt = event.name;
   closeEventButton.classList.add('hidden');
@@ -2679,19 +2731,7 @@ function continueAfterEvent() {
   gameData.currentPhase = gameData.eventResumePhase;
   gameData.eventResumePhase = '';
   if (checkMissionFailure(`after ${resolvedEventName}`)) return;
-  // Each event ends with the transporter arriving at the next area, so the
-  // scenery and current stop advance after every incident.
-  if (
-    gameData.currentPhase === 'travel' &&
-    gameData.routeIndex < gameData.route.length - 1
-  ) {
-    if (gameData.simulationTimer) clearTimeout(gameData.simulationTimer);
-    gameData.simulationTimer = setTimeout(() => {
-      gameData.simulationTimer = null;
-      completeTravelSegment();
-    }, 300 * JOURNEY_PACE);
-    return;
-  }
+  // The truck picks up where it stopped and keeps driving across the scene.
   scheduleJourney(300);
 }
 

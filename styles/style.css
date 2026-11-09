@@ -1433,36 +1433,6 @@ fieldset {
   pointer-events: none;
 }
 
-.truck-rig--journey {
-  position: absolute;
-  bottom: 10%;
-  left: 29%;
-  width: min(46%, 620px);
-  margin: 0;
-  filter: drop-shadow(0 10px 7px rgba(0, 0, 0, 0.35));
-}
-
-.journey-truck-track.is-driving .truck-rig--journey.is-driving:not(.is-interacting):not(.is-reduced-motion) {
-  left: -5%;
-  animation: transporter-drive 18s linear infinite, truck-suspension 1.15s ease-in-out infinite;
-}
-
-/* When paused (event open, repair open, between stops) the truck is always
-   anchored in a visible position — never half off-stage. */
-.location-stage.is-paused .journey-truck-track .truck-rig--journey {
-  animation: none !important;
-  left: 29% !important;
-  transition: left 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-.location-stage.is-paused .journey-truck-track .truck-rig__wheels {
-  visibility: hidden;
-}
-
-.journey-truck-track:not(.is-driving) .truck-rig--journey {
-  left: 29%;
-}
-
 /* ---- Map modal + journey log ---- */
 .journey-modal {
   position: absolute;
@@ -2115,11 +2085,6 @@ fieldset {
   animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-@keyframes transporter-drive {
-  from { left: -5%; }
-  to { left: 102%; }
-}
-
 @keyframes truck-suspension {
   0%, 100% { transform: translateY(0); }
   25% { transform: translateY(-2px); }
@@ -2189,28 +2154,6 @@ fieldset {
 
   .journey-modal__body {
     grid-template-columns: 1fr;
-  }
-
-  .truck-rig--journey {
-    width: min(70%, 440px);
-    bottom: 14%;
-  }
-
-  .truck-pollinator-badges {
-    bottom: calc(14% + min(70%, 440px) * 0.5);
-  }
-
-  .journey-truck-track.is-driving .truck-rig--journey.is-driving:not(.is-interacting):not(.is-reduced-motion) {
-    left: -8%;
-    animation-name: transporter-drive, truck-suspension;
-    animation-duration: 18s, 1.15s;
-    animation-timing-function: linear, ease-in-out;
-    animation-iteration-count: infinite, infinite;
-  }
-
-  @keyframes transporter-drive {
-    from { left: -8%; }
-    to { left: 102%; }
   }
 
   .event-card {
@@ -2784,5 +2727,55 @@ body.is-dragging-part * {
   }
   #vehicle-builder.is-wizard .transporter-preview {
     position: static;
+  }
+}
+
+
+/* =====================================================================
+   JOURNEY TRUCK v2 — 50% bigger, driven by journey progress.
+   The mover (truck + crew badges) is positioned by game.js: it parks on
+   arrival, then drives steadily left → right through each travel slice
+   and leaves the scene on the right before the next location loads.
+   ===================================================================== */
+.journey-truck-mover {
+  position: absolute;
+  bottom: clamp(5rem, 15%, 9rem);
+  left: 9%;
+  width: min(69%, 930px);
+  transition-property: left;
+  transition-timing-function: linear;
+  will-change: left;
+}
+
+.truck-rig--journey {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  filter: drop-shadow(0 14px 10px rgba(0, 0, 0, 0.38));
+}
+
+.journey-truck-track.is-driving .truck-rig--journey.is-driving:not(.is-interacting):not(.is-reduced-motion) {
+  animation: truck-suspension 1.15s ease-in-out infinite;
+}
+
+.location-stage.is-paused .journey-truck-track .truck-rig--journey {
+  animation: none !important;
+}
+
+.location-stage.is-paused .journey-truck-track .truck-rig__wheels,
+.journey-truck-track:not(.is-driving) .truck-rig__wheels {
+  visibility: hidden;
+}
+
+.journey-truck-mover .truck-pollinator-badges {
+  bottom: calc(100% + 0.4rem);
+  left: 45%;
+  max-width: 90%;
+}
+
+@media (max-width: 700px) {
+  .journey-truck-mover {
+    width: min(100%, 660px);
+    bottom: 16%;
   }
 }
