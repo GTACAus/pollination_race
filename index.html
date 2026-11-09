@@ -4,17 +4,73 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Great Pollination Race</title>
-  <link rel="stylesheet" href="styles/style.css?v=20261109h" />
+  <link rel="stylesheet" href="styles/style.css?v=20261109l" />
   <link rel="stylesheet" href="minigames/grant-grab/grant-grab.css" />
 </head>
 <body>
-  <div id="title-screen" class="screen">
-    <h1>The Great Pollination Race</h1>
-    <button id="start-btn" type="button">Start</button>
-    <button id="instructions-btn" type="button">Instructions</button>
-    <div id="instructions" class="popup hidden">
-      <p>Help pollinate Victoria! Build your transporter, manage power and budget, and navigate hazards.</p>
-      <p>Choose a control system, engine, pollinator crew, and support equipment before setting off.</p>
+  <div id="title-screen" class="screen title-screen">
+    <h1 class="sr-only">The Great Pollination Race</h1>
+    <div class="title-stage" id="title-stage">
+      <img class="title-art"
+        src="assets/title/title-screen.webp"
+        srcset="assets/title/title-screen-small.webp 836w, assets/title/title-screen.webp 1672w"
+        sizes="100vw"
+        alt="The Great Pollination Race: a pixel-art meadow of flowers at sunset" />
+      <div class="title-bees" id="title-bees" aria-hidden="true"></div>
+      <div class="title-menu">
+        <button id="start-btn" type="button" class="title-btn title-btn--start">▶ Start</button>
+        <button id="instructions-btn" type="button" class="title-btn title-btn--help" aria-haspopup="dialog" aria-controls="instructions">How to play</button>
+      </div>
+    </div>
+
+    <div id="instructions" class="instructions-modal hidden" role="dialog" aria-modal="true" aria-labelledby="instructions-title">
+      <div class="instructions-modal__panel">
+        <button id="instructions-close" type="button" class="instructions-modal__close" aria-label="Close">✕</button>
+        <h2 id="instructions-title">How to play</h2>
+        <p class="instructions-intro">Victoria's farms need pollinators! Build a transporter, carry bees and robot pollinators around the state, and pollinate as many crops as you can.</p>
+
+        <div class="instructions-grid">
+          <section>
+            <h3>🎯 Learning goals</h3>
+            <p class="instructions-sub">We are learning to…</p>
+            <ul>
+              <li>explain why pollinators matter for food crops, and how bees and technology can work together;</li>
+              <li>design a solution within limits: <strong>budget, space and power</strong>;</li>
+              <li>weigh up trade-offs and justify our design choices;</li>
+              <li>use data and feedback to test and improve a design.</li>
+            </ul>
+          </section>
+          <section>
+            <h3>✅ Success criteria</h3>
+            <p class="instructions-sub">I can…</p>
+            <ul>
+              <li>build a transporter that stays on budget, fits in the truck and has enough power;</li>
+              <li>choose a crew that covers each farm's needs for the <strong>whole</strong> trip (bees get tired!);</li>
+              <li>make and explain smart choices when events happen on the road;</li>
+              <li>use my score breakdown to name one change that would improve my next design.</li>
+            </ul>
+          </section>
+        </div>
+
+        <h3>🚚 The four stages</h3>
+        <ol class="instructions-steps">
+          <li><strong>Grant Grab:</strong> catch grants to boost your starting budget.</li>
+          <li><strong>Build:</strong> choose a truck size, control system, engine, pollinator crew and extras. Tap cards or drag them onto the truck.</li>
+          <li><strong>Drive:</strong> travel to 7 farms. Handle events, repair your truck, and play the optional <em>Pollen Rush</em> mini-game for a pollination bonus.</li>
+          <li><strong>Score:</strong> see what worked, then build again to beat it.</li>
+        </ol>
+
+        <h3>🏆 How your score out of 100 works</h3>
+        <ul class="instructions-score">
+          <li><span>Crops pollinated</span><strong>60</strong></li>
+          <li><span>On-time driving</span><strong>20</strong></li>
+          <li><span>Pollinator care</span><strong>10</strong></li>
+          <li><span>Truck condition</span><strong>5</strong></li>
+          <li><span>Money sense (keep 10% spare)</span><strong>5</strong></li>
+        </ul>
+        <p class="instructions-tip">💡 Tip: every farm needs about 350,000 pollinators working. Honey bee numbers halve after day 30, robots need a controller (and some need charging), and your engine must power everything you load.</p>
+        <button id="instructions-start" type="button" class="title-btn title-btn--start">▶ Let's go!</button>
+      </div>
     </div>
   </div>
 
@@ -34,8 +90,8 @@
     <h2>Vehicle Builder</h2>
     <section id="builder-onboarding" class="onboarding-card" aria-label="How to build your transporter">
       <button id="dismiss-onboarding" type="button" class="onboarding-close" aria-label="Close tips">✕</button>
-      <p class="onboarding-lead"><strong>Build your transporter one step at a time.</strong> Pick a brain, an engine, your crew, and some extras — the Next button only unlocks when a step is complete. One Honey Bee Hive carries 20,000–80,000 bees; one Robot Pollinator carries 20,000 robots. Keep an eye on budget and power.</p>
-      <p class="onboarding-lead"><strong>At each stop,</strong> the <em>Pollen jar</em> shows how much that site will produce. The default is <strong>80%</strong>; good events can push it to <strong>100%</strong>, bad ones can pull it down to <strong>70%</strong>.</p>
+      <p class="onboarding-lead"><strong>Build your transporter one step at a time:</strong> truck, brain, engine, crew, extras. Tap a card to load it or drag it onto the truck. Tap a chosen card again to take it off.</p>
+      <p class="onboarding-lead"><strong>Every farm needs about 350,000 pollinators working.</strong> Watch <em>Crew vs farm needs</em>: honey bees halve after day 30, robots need control (and some need charging), and your engine must power everything. Keep a little money spare for repairs.</p>
     </section>
     <nav class="builder-wizard" aria-label="Build steps">
       <ol class="builder-wizard__steps" id="builder-wizard-steps"></ol>
@@ -57,7 +113,8 @@
     <div class="stats-row">
       <p>Budget: <strong>$<span id="spent">0</span> spent / $<span id="budget">0</span> available</strong> (<span id="budget-remaining">0</span> remaining)</p>
       <p>Grid: <strong><span id="spaces-used">0</span> / <span id="spaces-total">0</span> spaces used</strong> (<span id="spaces-remaining">0</span> remaining)</p>
-      <p>Power Used: <strong><span id="power">0</span>W</strong></p>
+      <p>Power: <strong><span id="power">0</span></strong></p>
+      <p title="How much of each farm's flowers your crew can pollinate. Honey bees halve after day 30, Smart Hives after day 60.">Crew vs farm needs: <strong><span id="crew-estimate">no crew yet</span></strong></p>
     </div>
     <p id="builder-feedback" class="builder-feedback" role="status" aria-live="polite"></p>
     <div class="builder-workspace">
@@ -264,7 +321,8 @@
     </div>
   </div>
 
-  <script src="scripts/minigames.js?v=20261109h"></script>
-  <script src="scripts/game.js?v=20261109h"></script>
+  <script src="scripts/minigames.js?v=20261109l"></script>
+  <script src="scripts/title.js?v=20261109l"></script>
+  <script src="scripts/game.js?v=20261109l"></script>
 </body>
 </html>

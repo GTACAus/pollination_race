@@ -54,7 +54,7 @@
       "type": "control",
       "driverEfficiency": 1.0,
       "canLoseSignal": true,
-      "notes": "May lose signal in extreme weather. Vehicle will stop and wait to reestablish control.",
+      "notes": "Loses signal in extreme weather: every weather event costs an extra 4 hours.",
       "cost": 30000,
       "power": -300
     }
@@ -126,8 +126,8 @@
         80000
       ],
       "weatherDamage": true,
-      "notes": "Each Hive will have a random number of bees (between 20000 to 80000). Population will drop by half after 30 days. Extreme weather can damage the hive and cause more bee death.",
-      "cost": 1000,
+      "notes": "20,000–80,000 bees per hive. Bee numbers halve after day 30 of the journey. Extreme weather can kill bees.",
+      "cost": 2000,
       "power": 0
     },
     {
@@ -137,8 +137,8 @@
       "quantity": 20000,
       "weatherDamageChance": 0.1,
       "worksAtNight": false,
-      "notes": "Don't die but can be damaged in extreme weather (10% chance). Will not work at night. Fast to pollinate (15% faster speed compared to bees).",
-      "cost": 3000,
+      "notes": "20,000 robots, 15% faster than bees, never age, no charging needed. Needs Robo-Pollinator Control. 10% chance of weather damage.",
+      "cost": 4000,
       "power": 0
     },
     {
@@ -150,8 +150,8 @@
         60000
       ],
       "immuneToWeather": true,
-      "notes": "Population will drop by half after 60 days. Extreme weather does no damage the hive. Random number of between 15000 and 60000 bees.",
-      "cost": 3000,
+      "notes": "15,000–60,000 bees per hive. Numbers only halve after day 60, and weather losses are halved.",
+      "cost": 4000,
       "power": -120
     },
     {
@@ -161,8 +161,8 @@
       "quantity": 15000,
       "requiresCharging": true,
       "worksAtNight": true,
-      "notes": "Can be damaged by extreme weather. 15000 total. Can operate 24 hours before charging. Fast to pollinate (5% faster speed compared to bees).",
-      "cost": 2000,
+      "notes": "15,000 robots that work day and night (30% more pollination). Needs Robo-Pollinator Control and a charging station.",
+      "cost": 3500,
       "power": -150
     },
     {
@@ -171,8 +171,8 @@
       "efficiency": 0.9,
       "quantity": 20000,
       "requiresCharging": true,
-      "notes": "Can't be damaged by extreme weather. Can operate 24 hours before charging. 20000 total robots. Slow to pollinate (10% lower speed compared to bees).",
-      "cost": 1000,
+      "notes": "20,000 robots, 10% slower than bees, never age and ignore weather. Needs Robo-Pollinator Control and a charging station.",
+      "cost": 2500,
       "power": -100
     }
   ],
@@ -180,14 +180,14 @@
     {
       "name": "Distance and Vision Sensors",
       "type": "component",
-      "effect": "If vehicle is remote controlled or AI controlled and this component is not included, vehicle accidents increase by 50%.",
+      "effect": "Without these, AI or remote-controlled trucks take 50% more damage in accidents.",
       "cost": 1000,
       "power": -80
     },
     {
       "name": "Repair",
       "type": "component",
-      "effect": "Improves manual repair speed and restores 5 percentage points of transporter health after each completed travel segment.",
+      "effect": "Repairs take 2 hours instead of 8, and the truck regains 5% health after every leg.",
       "cost": 3000,
       "power": -80
     },
@@ -202,7 +202,7 @@
       "name": "Robo-Pollinator Control",
       "type": "component",
       "effect": "If not included all Robos (Foragers, Scouts and Pollinators) will not function.",
-      "cost": 10000,
+      "cost": 8000,
       "power": -100
     },
     {
@@ -210,8 +210,8 @@
       "type": "charging",
       "chargeCapacity": 10000,
       "chargeTimePerBatch": 1,
-      "notes": "Can charge approximately 1000 robots at a time. Takes 1 hour to charge.",
-      "cost": 1000,
+      "notes": "Charges 10,000 robots per hour. Robots that need charging barely work without a station.",
+      "cost": 2000,
       "power": -160
     },
     {
@@ -219,8 +219,8 @@
       "type": "charging",
       "chargeCapacity": 20000,
       "chargeTimePerBatch": 1,
-      "notes": "Can charge approximately 20000 robots at a time. Takes 1 hour to charge.",
-      "cost": 1500,
+      "notes": "Charges 20,000 robots per hour, so charging stops are twice as quick.",
+      "cost": 4000,
       "power": -160
     }
   ],

@@ -76,6 +76,32 @@ const MAX_EVENT_SUCCESS_PROBABILITY = 0.95;
 const FUNDING_RULES = { baseMin: 60000, baseMax: 72000, maxBonus: 25000 };
 // Pollen Rush: a perfect round boosts that site's pollination by this much.
 const POLLEN_RUSH_MAX_BONUS_PCT = 15;
+
+// ---------- Game balance ----------
+// Every farm needs this many "pollinator units" working for its whole stay.
+// One honey bee = 1 unit; robots/hives scale by efficiency and the factors below.
+const BALANCE = {
+  siteDemand: 350000,
+  // Hive populations halve after this many journey days.
+  ageingHalfLifeDays: { 'Honey Bee Hive': 30, 'Smart Hive': 60 },
+  // Robot Scouts work day and night.
+  workRateBonus: { 'Robot Scout': 1.3 },
+  // Robots that need charging, with no working charging station.
+  noChargerFactor: 0.25,
+  // Each leg may take this multiple of the planned time before crops suffer.
+  latenessGrace: 1.25,
+  minArrivalFactor: 0.5,
+  // AI / remote control without Distance and Vision Sensors.
+  noSensorsDamageMultiplier: 1.5,
+  remoteSignalLossHours: 4,
+  repairModuleHealPerLeg: 5,
+  // Keep this share of the budget unspent for full budget points.
+  budgetReserveTarget: 0.1,
+  // Points available in the final score (adds to 100).
+  // Target road time = planned travel time × this factor.
+  timeParFactor: 1.1,
+  scoreWeights: { pollination: 60, time: 20, survival: 10, health: 5, budget: 5 }
+};
 const ROBOT_POLLINATORS = new Set(['Robot Forager', 'Robot Scout', 'Robot Pollinator']);
 
 const routeMapPositions = [
@@ -175,16 +201,21 @@ async function init() {
 function bindButtons() {
   document.getElementById('start-btn').addEventListener('click', startGame);
   document.getElementById('instructions-btn').addEventListener('click', toggleInstructions);
-  document.addEventListener('click', (event) => {
-    const instructions = document.getElementById('instructions');
-    const instructionsButton = document.getElementById('instructions-btn');
-    if (
-      !instructions.classList.contains('hidden') &&
-      !instructions.contains(event.target) &&
-      !instructionsButton.contains(event.target)
-    ) {
-      instructions.classList.add('hidden');
-    }
+  const instructions = document.getElementById('instructions');
+  const closeInstructions = () => {
+    instructions.classList.add('hidden');
+    document.getElementById('instructions-btn').focus();
+  };
+  document.getElementById('instructions-close').addEventListener('click', closeInstructions);
+  document.getElementById('instructions-start').addEventListener('click', () => {
+    instructions.classList.add('hidden');
+    startGame();
+  });
+  instructions.addEventListener('click', (event) => {
+    if (event.target === instructions) closeInstructions();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !instructions.classList.contains('hidden')) closeInstructions();
   });
   document.getElementById('route-btn').addEventListener('click', startRoute);
   vehicleChoice.addEventListener('change', () => changeVehicle(vehicleChoice.value));
@@ -311,6 +342,7 @@ function resetBuild() {
 function toggleInstructions() {
   const instructions = document.getElementById('instructions');
   instructions.classList.toggle('hidden');
+  if (!instructions.classList.contains('hidden')) document.getElementById('instructions-close').focus();
 }
 
 function generateBudget() {
@@ -1239,7 +1271,25 @@ function updateStats() {
     ...gameData.selectedComponents.other
   ].reduce((sum, item) => sum + (item?.power || 0), 0);
   gameData.powerUsed = Math.abs(selectedPower);
-  powerEl.textContent = `${gameData.powerUsed}`;
+  gameData.powerBalance = selectedPower;
+  const powerCard = powerEl.closest('p');
+  if (!gameData.selectedComponents.engine) {
+    powerEl.textContent = `${selectedPower >= 0 ? '' : '−'}${Math.abs(selectedPower)}W needed — pick an engine`;
+  } else {
+    powerEl.textContent = selectedPower >= 0
+      ? `${selectedPower}W spare`
+      : `${Math.abs(selectedPower)}W short!`;
+  }
+  powerCard?.classList.toggle('is-warning', selectedPower < 0 && Boolean(gameData.selectedComponents.engine));
+  const crewEl = document.getElementById('crew-estimate');
+  if (crewEl) {
+    const estimate = estimateCrewCoverage(gameData.selectedComponents);
+    const pct = (value) => `${Math.min(100, Math.round(value * 100))}%`;
+    crewEl.textContent = gameData.selectedComponents.pollinator.length
+      ? `${pct(estimate.early)} early trip · ${pct(estimate.late)} late trip`
+      : 'no crew yet';
+    crewEl.closest('p')?.classList.toggle('is-warning', gameData.selectedComponents.pollinator.length > 0 && estimate.late < 0.6);
+  }
   renderVehiclePreview();
   renderTransporterGrid();
 }
@@ -1478,10 +1528,33 @@ function startRoute() {
     showToast('Add ' + missing.map((w) => `${article(w)} ${w}`).join(', ') + ' before setting off.', { tone: 'warning' });
     return;
   }
+  if ((gameData.powerBalance ?? 0) < 0) {
+    showFixDialog({
+      title: 'Not enough power',
+      body: `Your parts need ${Math.abs(gameData.powerBalance)}W more than the ${gameData.selectedComponents.engine.name} can supply. Choose a stronger engine or remove some powered parts (robots, Smart Hives and extras all use power).`,
+      actions: [
+        { label: 'Back to the engine step', primary: true, onClick: () => showWizardStep(WIZARD_STEPS.findIndex((step) => step.key === 'engine')) }
+      ]
+    });
+    return;
+  }
   const hasRobots = gameData.selectedComponents.pollinator.some((item) =>
     ROBOT_POLLINATORS.has(item.name)
   );
   const hasRoboControl = hasSelectedComponent('Robo-Pollinator Control');
+  const needsCharger = gameData.selectedComponents.pollinator.some((item) => item.requiresCharging);
+  if (hasRobots && hasRoboControl && needsCharger && !hasWorkingCharger() && !gameData.chargerWarningShown) {
+    gameData.chargerWarningShown = true;
+    showFixDialog({
+      title: 'Robots will run flat',
+      body: 'Robot Scouts and Robot Pollinators need a charging station. Without one they only work at a quarter of their power.',
+      actions: [
+        { label: 'Add Small Charging Station', primary: true, onClick: () => { addOtherByName('Small Charging Station'); startRoute(); } },
+        { label: 'Go anyway', onClick: () => startRoute() }
+      ]
+    });
+    return;
+  }
   const hasBiologicalPollinators = gameData.selectedComponents.pollinator.some((item) =>
     item.name === 'Honey Bee Hive' || item.name === 'Smart Hive'
   );
@@ -1526,6 +1599,9 @@ function continueStartRoute() {
   gameData.speedAdjustmentPct = 0;
   gameData.pollinatorPopulations = {};
   gameData.siteOutputMultipliers = gameData.route.map(() => 1);
+  gameData.siteArrivalFactors = gameData.route.map(() => 1);
+  gameData.siteCoverage = [];
+  gameData.segmentStartHours = 0;
   gameData.siteProductivitySnapshots = gameData.route.map(() => null);
   gameData.vehicleHealth = 100;
   gameData.componentStatuses = {};
@@ -1714,6 +1790,7 @@ function startTravelSegment() {
   }
   gameData.segmentSliceIndex = 0;
   gameData.segmentEventIds = new Set();
+  gameData.segmentStartHours = gameData.elapsedJourneyHours;
   const risk = gameData.route[gameData.routeIndex + 1].eventRiskScore ?? 0.3;
   const opportunityCount = SIMULATION_RULES.minEventOpportunitiesPerSegment +
     Math.floor(
@@ -1745,7 +1822,8 @@ function getTravelModifiers() {
   const control = gameData.selectedComponents.control;
   const engineSpeed = hasOperationalComponent(engine?.name) ? (engine.speedMultiplier || 1) : 0.5;
   const driverEfficiency = hasOperationalComponent(control?.name) ? (control.driverEfficiency || 1) : 0.5;
-  const navigationFactor = hasOperationalComponent('Navigation GPS') ? 0.9 : 1;
+  const navigationFactor = hasOperationalComponent('Navigation GPS') ? 1 / 0.9 : 1;
+  const truckSpeed = gameData.vehicles[gameData.selectedVehicle]?.speedMultiplier || 1;
   const healthFactor = getHealthSpeedMultiplier();
   const solarWeatherFactor = engine?.name === 'Solar Battery' &&
     gameData.currentWeather === 'extreme' &&
@@ -1759,7 +1837,8 @@ function getTravelModifiers() {
     navigationFactor,
     healthFactor,
     solarWeatherFactor,
-    totalSpeed: engineSpeed * driverEfficiency * navigationFactor * healthFactor * solarWeatherFactor
+    truckSpeed,
+    totalSpeed: engineSpeed * driverEfficiency * navigationFactor * healthFactor * solarWeatherFactor * truckSpeed
   };
 }
 
@@ -1814,6 +1893,23 @@ function completeTravelSegment() {
   const stop = gameData.route[gameData.routeIndex];
   updateJourneyLocation(stop, gameData.routeIndex);
   gameData.agriculturalLocationsReached += (stop.stopDurationDays || 0) > 0 ? 1 : 0;
+  // Late arrival: flowers open on schedule whether or not the bees are there.
+  const origin = gameData.route[gameData.routeIndex - 1];
+  const plannedHours = (origin?.estimatedTravelDays || 0) * 24;
+  const legHours = gameData.elapsedJourneyHours - (gameData.segmentStartHours ?? gameData.elapsedJourneyHours);
+  const overrunHours = Math.max(0, legHours - plannedHours * BALANCE.latenessGrace);
+  if ((stop.stopDurationDays || 0) > 0) {
+    const arrivalFactor = Math.max(BALANCE.minArrivalFactor, 1 - overrunHours / (stop.stopDurationDays * 24));
+    gameData.siteArrivalFactors[gameData.routeIndex] = arrivalFactor;
+    if (arrivalFactor < 1) {
+      addLogEntry(`Arrived ${formatDuration(overrunHours)} behind schedule at ${stop.region}: some flowers bloomed and faded without pollinators (−${Math.round((1 - arrivalFactor) * 100)}% for this farm).`);
+    }
+  }
+  if (hasOperationalComponent('Repair') && gameData.vehicleHealth > 0 && gameData.vehicleHealth < 100) {
+    const before = gameData.vehicleHealth;
+    gameData.vehicleHealth = Math.min(100, before + BALANCE.repairModuleHealPerLeg);
+    addLogEntry(`Repair module patched the transporter on the way: health ${before}% → ${gameData.vehicleHealth}%.`);
+  }
   gameData.segmentSliceIndex = 0;
   gameData.segmentEventIds = new Set();
   resetPollenJarForNewSite(); // start empty; fill to this stop's target
@@ -1931,11 +2027,8 @@ function updateJourneyLocation(stop, routeIndex) {
  * jar reading computed from siteOutputMultipliers.
  */
 function computeSiteTargetPct(index) {
-  const mult = gameData.siteOutputMultipliers?.[index] ?? 1;
-  let delta = (mult - 1) * 100; // mult 1.20 → +20pts; mult 0.90 → -10pts
-  if (delta > 20) delta = 20;
-  if (delta < -10) delta = -10;
-  return Math.max(70, Math.min(100, Math.round(80 + delta)));
+  const coverage = getProjectedSiteCoverage(index);
+  return coverage === null ? 0 : Math.round(coverage * 100);
 }
 
 /**
@@ -2233,6 +2326,13 @@ function resolveEventChoice(choiceId) {
 }
 
 function applyEventOutcome(outcome) {
+  const controlName = gameData.selectedComponents.control?.name;
+  const signalLoss = gameData.currentEvent?.category === 'weather' && controlName === 'Remote Controlled';
+  if (signalLoss) {
+    outcome = { ...outcome, timeHours: (outcome.timeHours || 0) + BALANCE.remoteSignalLossHours };
+  }
+  const unsightedDriving = (controlName === 'AI Controlled' || controlName === 'Remote Controlled') &&
+    !hasOperationalComponent('Distance and Vision Sensors');
   const appliedEffects = {
     timeHours: outcome.timeHours || 0,
     chargingHours: outcome.chargingHours || 0,
@@ -2325,9 +2425,16 @@ function applyEventOutcome(outcome) {
     }
   }
 
-  const healthDamage = outcome.vehicleHealthLossPct
+  if (signalLoss) {
+    appliedEffects.messages.push(`Remote control lost signal in the weather (+${BALANCE.remoteSignalLossHours} hours).`);
+  }
+  let healthDamage = outcome.vehicleHealthLossPct
     ? resolveEffectRange(outcome.vehicleHealthLossPct)
     : 0;
+  if (healthDamage > 0 && unsightedDriving) {
+    healthDamage = Math.min(100, Math.round(healthDamage * BALANCE.noSensorsDamageMultiplier));
+    appliedEffects.messages.push('No Distance and Vision Sensors: the driverless truck took 50% extra damage.');
+  }
   if (healthDamage > 0) {
     const previousHealth = gameData.vehicleHealth;
     gameData.vehicleHealth = Math.max(0, gameData.vehicleHealth - healthDamage);
@@ -2809,8 +2916,25 @@ function getFunctioningPollinatorTotal() {
   }, 0);
 }
 
-function getEffectivePollinatorOutput(initialPopulation = false) {
+function hasWorkingCharger() {
+  return (gameData.catalog.other || []).some((component) =>
+    component.type === 'charging' && hasOperationalComponent(component.name));
+}
+
+/** Multiplier for one pollinator type: ageing, night work, charging. */
+function getPollinatorFactor(name, journeyDays, chargerAvailable = hasWorkingCharger()) {
+  let factor = BALANCE.workRateBonus[name] || 1;
+  const halfLife = BALANCE.ageingHalfLifeDays[name];
+  if (halfLife && journeyDays >= halfLife) factor *= 0.5;
+  const definition = (gameData.catalog.pollinator || []).find((item) => item.name === name);
+  if (definition?.requiresCharging && !chargerAvailable) factor *= BALANCE.noChargerFactor;
+  return factor;
+}
+
+function getEffectivePollinatorOutput(initialPopulation = false, journeyDays = null) {
   const controlOperational = hasOperationalComponent('Robo-Pollinator Control');
+  const days = journeyDays ?? (initialPopulation ? 0 : gameData.elapsedJourneyHours / 24);
+  const chargerAvailable = hasWorkingCharger();
   return Object.entries(gameData.pollinatorPopulations).reduce((total, [name, groups]) => {
     const component = gameData.catalog.pollinator.find((item) => item.name === name);
     if (!component || !hasOperationalComponent(name) ||
@@ -2819,8 +2943,43 @@ function getEffectivePollinatorOutput(initialPopulation = false) {
       (sum, group) => sum + (initialPopulation ? group.initial : group.active),
       0
     );
-    return total + population * (component.efficiency || 1);
+    return total + population * (component.efficiency || 1) *
+      getPollinatorFactor(name, days, chargerAvailable);
   }, 0);
+}
+
+/** Share of a farm's pollination need the crew would cover right now (0-1). */
+function getProjectedSiteCoverage(index = gameData.routeIndex) {
+  if (gameData.siteCoverage?.[index] !== undefined) return gameData.siteCoverage[index];
+  const stop = gameData.route?.[index];
+  if (!stop || !(stop.stopDurationDays > 0)) return null;
+  const midStayDays = gameData.elapsedJourneyHours / 24 + stop.stopDurationDays / 2;
+  const output = getEffectivePollinatorOutput(false, midStayDays) *
+    (gameData.siteOutputMultipliers?.[index] ?? 1) *
+    (gameData.siteArrivalFactors?.[index] ?? 1);
+  return Math.max(0, Math.min(1, output / BALANCE.siteDemand));
+}
+
+/**
+ * Builder estimate from a component list (no journey yet): average bee
+ * numbers, early (day 7) vs late (day 75) in the trip.
+ */
+function estimateCrewCoverage(components) {
+  const names = new Set([
+    components.control?.name, components.engine?.name,
+    ...components.pollinator.map((item) => item.name),
+    ...components.other.map((item) => item.name)
+  ]);
+  const charger = components.other.some((item) => item.type === 'charging');
+  const control = names.has('Robo-Pollinator Control');
+  const at = (days) => components.pollinator.reduce((sum, item) => {
+    if (ROBOT_POLLINATORS.has(item.name) && !control) return sum;
+    const each = item.quantityRange
+      ? (item.quantityRange[0] + item.quantityRange[1]) / 2
+      : (item.quantity || 0);
+    return sum + each * item.quantity * (item.efficiency || 1) * getPollinatorFactor(item.name, days, charger);
+  }, 0) / BALANCE.siteDemand;
+  return { early: at(7), late: at(75) };
 }
 
 function refreshJourneyStatus() {
@@ -2866,12 +3025,17 @@ function refreshJourneyStatus() {
   if (pollenPctEl) pollenPctEl.textContent = `${pollenTarget}%`;
   if (pollenJar) pollenJar.setAttribute('aria-valuenow', String(pollenTarget));
   if (pollenSub) {
-    const siteName = gameData.route?.[gameData.routeIndex]?.region || 'this stop';
-    const base = `${siteName}: ${pollenTarget}% output`;
-    if (pollenTarget >= 100) pollenSub.textContent = `${base} — max!`;
-    else if (pollenTarget > 80) pollenSub.textContent = `${base} (boosted)`;
-    else if (pollenTarget < 80) pollenSub.textContent = `${base} (reduced)`;
-    else pollenSub.textContent = `${base} (normal)`;
+    const stop = gameData.route?.[gameData.routeIndex];
+    const siteName = stop?.region || 'this stop';
+    if (!(stop?.stopDurationDays > 0)) {
+      pollenSub.textContent = `${siteName}: no crops here — next farm ahead.`;
+    } else if (pollenTarget >= 100) {
+      pollenSub.textContent = `${siteName}: your crew covers every flower!`;
+    } else if (pollenTarget >= 75) {
+      pollenSub.textContent = `${siteName}: crew covers ${pollenTarget}% of the flowers.`;
+    } else {
+      pollenSub.textContent = `${siteName}: only ${pollenTarget}% covered — crew is too small or tired.`;
+    }
   }
 
   const activeTotal = getFunctioningPollinatorTotal();
@@ -3078,20 +3242,35 @@ function completePollinationAtCurrentStop() {
   const stop = gameData.route[gameData.routeIndex];
   const hours = Math.max(0, (stop.stopDurationDays || 0) * 24);
   if (hours === 0) return;
-  const outputMultiplier = gameData.siteOutputMultipliers[gameData.routeIndex] || 1;
-  const possible = gameData.startingPollinationCapacity * hours;
-  const achieved = getEffectivePollinatorOutput() * outputMultiplier * hours;
+  const index = gameData.routeIndex;
+  const outputMultiplier = gameData.siteOutputMultipliers[index] || 1;
+  const arrivalFactor = gameData.siteArrivalFactors[index] ?? 1;
+  const midStayDays = (gameData.elapsedJourneyHours + hours / 2) / 24;
+  const crewOutput = getEffectivePollinatorOutput(false, midStayDays);
+  const coverage = Math.max(0, Math.min(1, crewOutput * outputMultiplier * arrivalFactor / BALANCE.siteDemand));
   gameData.elapsedPollinationHours += hours;
   gameData.elapsedJourneyHours += hours;
-  gameData.totalPollinationPossible += possible;
-  gameData.totalPollinationAchieved += achieved;
-  gameData.currentSiteOutput = possible > 0 ? achieved / possible : 0;
+  gameData.siteCoverage[index] = coverage;
+  gameData.totalPollinationAchieved += coverage;
+  gameData.totalPollinationPossible += 1;
+  gameData.currentSiteOutput = coverage;
   gameData.pollinationSitesCompleted += 1;
-  gameData.siteProductivitySnapshots[gameData.routeIndex] = {
+  gameData.siteProductivitySnapshots[index] = {
     siteOutputMultiplier: outputMultiplier,
-    effectivePollinatorOutput: getEffectivePollinatorOutput()
+    arrivalFactor,
+    effectivePollinatorOutput: crewOutput,
+    coverage
   };
-  addLogEntry(`Pollination at ${stop.region}: ${Math.round(gameData.currentSiteOutput * 100)}% of planned output over ${formatDuration(hours)}.`);
+  const notes = [];
+  if (Object.keys(BALANCE.ageingHalfLifeDays).some((name) =>
+    hasSelectedComponent(name) && midStayDays >= BALANCE.ageingHalfLifeDays[name])) {
+    notes.push('ageing hives are down to half strength');
+  }
+  if (gameData.selectedComponents.pollinator.some((item) => item.requiresCharging) && !hasWorkingCharger()) {
+    notes.push('robots are running flat without a charging station');
+  }
+  if (arrivalFactor < 1) notes.push(`arriving late cost ${Math.round((1 - arrivalFactor) * 100)}%`);
+  addLogEntry(`Pollination at ${stop.region}: crew covered ${Math.round(coverage * 100)}% of the farm's flowers over ${formatDuration(hours)}${notes.length ? ` (${notes.join('; ')})` : ''}.`);
   refreshJourneyStatus();
 }
 
@@ -3245,26 +3424,16 @@ function finishJourney() {
     gameData.elapsedChargingHours += gameData.currentChargingAdjustmentHours;
     gameData.currentChargingAdjustmentHours = 0;
   }
-  const outputRatio = gameData.totalPollinationPossible > 0
-    ? gameData.totalPollinationAchieved / gameData.totalPollinationPossible
+  const farmIndexes = gameData.route
+    .map((stop, index) => ((stop.stopDurationDays || 0) > 0 ? index : -1))
+    .filter((index) => index >= 0);
+  // Farms never reached count as zero pollination.
+  const pollinationRatio = farmIndexes.length
+    ? farmIndexes.reduce((sum, index) => sum + (gameData.siteCoverage[index] || 0), 0) / farmIndexes.length
     : 0;
-  const controlEfficiency = gameData.selectedComponents.control?.driverEfficiency || 1;
-  const engineSpeed = gameData.selectedComponents.engine?.speedMultiplier || 1;
-  const squadCount = gameData.selectedComponents.pollinator.reduce(
-    (total, component) => total + component.quantity,
-    0
-  );
-  const supportCount = gameData.selectedComponents.other.length;
-  const buildPerformance = Math.min(100, Math.round(
-    35 + controlEfficiency * 20 + engineSpeed * 15 + squadCount * 0.08 + supportCount * 5
-  )) / 100;
-  const baselineHours = gameData.baselineTravelHours + gameData.baselinePollinationHours;
-  const timeEfficiency = baselineHours > 0
-    ? Math.min(1, baselineHours / Math.max(1, gameData.elapsedJourneyHours))
-    : 0;
-  const journeyPerformance = buildPerformance *
-    Math.max(0, Math.min(1, outputRatio)) *
-    timeEfficiency;
+  const plannedRoadHours = gameData.baselineTravelHours * BALANCE.timeParFactor;
+  const roadHours = Math.max(1, gameData.elapsedJourneyHours - gameData.elapsedPollinationHours);
+  const timeRatio = gameData.missionFailed ? 0 : Math.min(1, plannedRoadHours / roadHours);
   const permanentSurvivors = Object.values(gameData.pollinatorPopulations)
     .flat()
     .reduce((sum, group) => sum + group.initial - group.permanentLoss, 0);
@@ -3272,12 +3441,25 @@ function finishJourney() {
     ? permanentSurvivors / gameData.startingPollinatorTotal
     : 0;
   const health = Math.max(0, Math.min(100, gameData.vehicleHealth)) / 100;
-  const score = Math.max(0, Math.min(100, Math.round(100 * (
-    SIMULATION_RULES.scoreWeights.journey * journeyPerformance +
-    SIMULATION_RULES.scoreWeights.pollinatorSurvival * survival +
-    SIMULATION_RULES.scoreWeights.vehicleHealth * health
-  ))));
+  const budgetRatio = gameData.budget > 0
+    ? Math.max(0, Math.min(1, gameData.budgetRemaining / (gameData.budget * BALANCE.budgetReserveTarget)))
+    : 0;
+  const weights = BALANCE.scoreWeights;
+  const parts = [
+    { key: 'pollination', label: 'Crops pollinated', ratio: pollinationRatio, max: weights.pollination,
+      detail: `${Math.round(pollinationRatio * 100)}% of all flowers across ${farmIndexes.length} farms` },
+    { key: 'time', label: 'On-time driving', ratio: timeRatio, max: weights.time,
+      detail: `${formatDuration(roadHours)} on the road (target ${formatDuration(plannedRoadHours)})` },
+    { key: 'survival', label: 'Pollinator care', ratio: survival, max: weights.survival,
+      detail: `${Math.round(survival * 100)}% of pollinators survived` },
+    { key: 'health', label: 'Truck condition', ratio: health, max: weights.health,
+      detail: `${Math.round(health * 100)}% health at the finish` },
+    { key: 'budget', label: 'Money sense', ratio: budgetRatio, max: weights.budget,
+      detail: `$${gameData.budgetRemaining.toLocaleString()} left (keep ${Math.round(BALANCE.budgetReserveTarget * 100)}% for full marks)` }
+  ].map((part) => ({ ...part, points: Math.round(part.ratio * part.max * 10) / 10 }));
+  const score = Math.max(0, Math.min(100, Math.round(parts.reduce((sum, part) => sum + part.points, 0))));
   gameData.score = score;
+  gameData.scoreParts = parts;
   gameData.currentPhase = 'complete';
   journeyScore.textContent = `${score}/100`;
   const summaryScoreEl = document.getElementById('summary-score-value');
@@ -3291,45 +3473,63 @@ function finishJourney() {
       : score >= 50 ? 'You made it — plenty to improve.'
       : 'Rough journey — try a new build!';
   }
-  // Ensure progress bar reads 100% at finish.
   const fill = document.getElementById('progress-bar-fill');
   if (fill) fill.style.width = '100%';
   const cur = document.getElementById('progress-current');
   if (cur) cur.textContent = String(gameData.route?.length || '—');
-  routeStatus.innerHTML += `
-    <p><strong>Final score:</strong> ${score}/100</p>
-    <p><strong>Pollination output:</strong> ${Math.round(outputRatio * 100)}% of planned output across ${gameData.pollinationSitesCompleted} sites</p>
-    <p><strong>Journey time:</strong> ${formatDuration(gameData.elapsedJourneyHours)} actual; ${formatDuration(baselineHours)} planned</p>
-    <p><strong>Score weights:</strong> ${Math.round(SIMULATION_RULES.scoreWeights.journey * 100)}% journey performance, ${Math.round(SIMULATION_RULES.scoreWeights.pollinatorSurvival * 100)}% pollinator survival, ${Math.round(SIMULATION_RULES.scoreWeights.vehicleHealth * 100)}% transporter health</p>
-  `;
+  routeStatus.innerHTML += `<p><strong>Final score:</strong> ${score}/100</p>`;
   missionSummaryOutcome.textContent = gameData.missionFailed
     ? `Mission ended at ${gameData.missionEndedAt}. ${gameData.missionFailureReason}`
-    : `Journey completed at ${gameData.missionEndedAt}.`;
+    : `Journey completed at ${gameData.missionEndedAt} after ${formatDuration(gameData.elapsedJourneyHours)}.`;
   missionSummaryDetails.replaceChildren();
-  [
-    ['Final score', `${score}/100`],
-    ['Journey performance', `${Math.round(journeyPerformance * 100)}%`],
-    ['Transporter build rating', `${Math.round(buildPerformance * 100)}%`],
-    ['Pollination output', `${Math.round(outputRatio * 100)}%`],
-    ['Pollinator survival', `${Math.round(survival * 100)}%`],
-    ['Transporter health', `${Math.round(health * 100)}%`],
-    ['Journey duration', formatDuration(gameData.elapsedJourneyHours)],
-    ['Travel time', formatDuration(gameData.elapsedTravelHours)],
-    ['Pollination time', formatDuration(gameData.elapsedPollinationHours)],
-    ['Charging time', formatDuration(gameData.elapsedChargingHours)],
-    ['Event time adjustment', `${gameData.eventTimeHours >= 0 ? '+' : '-'}${formatHours(Math.abs(gameData.eventTimeHours))}`],
-    ['Repair time', formatDuration(gameData.repairHours)],
-    ['Robots repaired', gameData.totalRobotsRepaired.toLocaleString()],
-    ['Robots damaged', gameData.totalRobotsDamaged.toLocaleString()],
-    ['Events resolved', String(gameData.eventHistory.length)],
-    ['Budget remaining', `$${gameData.budgetRemaining.toLocaleString()}`]
-  ].forEach(([label, value]) => {
-    const detail = document.createElement('p');
-    const strong = document.createElement('strong');
-    strong.textContent = `${label}: `;
-    detail.append(strong, document.createTextNode(value));
-    missionSummaryDetails.appendChild(detail);
+
+  parts.forEach((part) => {
+    const row = document.createElement('div');
+    row.className = 'score-part';
+    row.innerHTML = `
+      <div class="score-part__head"><strong></strong><span class="score-part__points"></span></div>
+      <div class="score-part__bar"><span style="width:${Math.round(part.ratio * 100)}%"></span></div>
+      <p class="score-part__detail"></p>`;
+    row.querySelector('strong').textContent = part.label;
+    row.querySelector('.score-part__points').textContent = `${part.points} / ${part.max}`;
+    row.querySelector('.score-part__detail').textContent = part.detail;
+    missionSummaryDetails.appendChild(row);
   });
+
+  const farms = document.createElement('div');
+  farms.className = 'score-farms';
+  const farmTitle = document.createElement('p');
+  farmTitle.className = 'eyebrow';
+  farmTitle.textContent = 'Farm by farm';
+  farms.appendChild(farmTitle);
+  farmIndexes.forEach((index) => {
+    const coverage = gameData.siteCoverage[index];
+    const line = document.createElement('p');
+    const rush = gameData.pollenRushResults.find((item) => item.index === index);
+    line.innerHTML = '<span></span><strong></strong>';
+    line.querySelector('span').textContent = gameData.route[index].region +
+      (rush?.bonusPct ? ` (Pollen Rush +${rush.bonusPct}%)` : '');
+    line.querySelector('strong').textContent = coverage === undefined ? 'not reached' : `${Math.round(coverage * 100)}%`;
+    farms.appendChild(line);
+  });
+  missionSummaryDetails.appendChild(farms);
+
+  const tips = buildImprovementTips(parts);
+  if (tips.length) {
+    const tipBox = document.createElement('div');
+    tipBox.className = 'score-tips';
+    const tipTitle = document.createElement('p');
+    tipTitle.className = 'eyebrow';
+    tipTitle.textContent = 'Ideas for your next build';
+    const list = document.createElement('ul');
+    tips.forEach((tip) => {
+      const li = document.createElement('li');
+      li.textContent = tip;
+      list.appendChild(li);
+    });
+    tipBox.append(tipTitle, list);
+    missionSummaryDetails.appendChild(tipBox);
+  }
   missionSummary.classList.toggle('is-failed', gameData.missionFailed);
   missionSummary.classList.remove('hidden');
   repairPanel.classList.add('hidden');
@@ -3340,6 +3540,36 @@ function finishJourney() {
   addLogEntry(gameData.missionFailed
     ? `Mission failed: ${gameData.missionFailureReason}`
     : `Journey complete. Final score: ${score}/100.`);
+}
+
+function buildImprovementTips(parts) {
+  const tips = [];
+  const byKey = Object.fromEntries(parts.map((part) => [part.key, part]));
+  const s = gameData.selectedComponents;
+  if (byKey.pollination.ratio < 0.75) {
+    const ageing = s.pollinator.some((item) => item.name === 'Honey Bee Hive');
+    tips.push(ageing
+      ? 'Honey bee numbers halve after day 30. Mix in Smart Hives or robots so later farms still get covered.'
+      : 'Your crew was too small for the farms. A bigger truck fits more pollinators.');
+  }
+  if (s.pollinator.some((item) => item.requiresCharging) && !s.other.some((item) => item.type === 'charging')) {
+    tips.push('Robot Scouts and Robot Pollinators need a charging station to work properly.');
+  }
+  if (byKey.time.ratio < 0.7) {
+    tips.push(s.control?.name === 'Driven by People'
+      ? 'Human drivers rest 8 hours a day. A faster engine, GPS or a different control system would save time.'
+      : 'You were slow on the road. Try a faster engine, Navigation GPS, or a smaller (faster) truck.');
+  }
+  if (byKey.health.ratio < 0.6) {
+    tips.push('Your truck took a beating. The Repair module heals it after every leg, and sensors protect driverless trucks.');
+  }
+  if (byKey.budget.ratio < 0.5) {
+    tips.push('Keep some money spare: repairs cost $500 each and unspent budget earns points.');
+  }
+  if (byKey.survival.ratio < 0.7) {
+    tips.push('Lots of pollinators died. Smart Hives halve weather losses; safer event choices protect your crew.');
+  }
+  return tips.slice(0, 3);
 }
 
 function resetToBuilder() {
@@ -3616,7 +3846,7 @@ const TOUR_STEPS = [
   {
     sel: '.hud-mana, .hud-pollen',
     title: 'Pollinator crew & pollen jar',
-    body: 'Top: your pollinator count and the share still alive. One Honey Bee Hive carries 20,000–80,000 bees; one Robot Pollinator carries 20,000 robots. Bottom: the pollen jar for the current stop — 80% is normal, boosts push it to 100%, penalties drop it to 70%.'
+    body: 'Top: how many pollinators are working and the share still alive. Bottom: the pollen jar shows how much of this farm\u2019s flowers your crew can cover. Ageing bees, flat robots, late arrival and bad events lower it; good events and Pollen Rush raise it.'
   },
   {
     sel: '.truck-pollinator-badges',
