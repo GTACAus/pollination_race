@@ -1,0 +1,115 @@
+{
+  "version": 2,
+  "description": "Separated transporter truck, wheel-only animation, cargo grid overlay and grid placement geometry. Grid/cargo are positioned independently from truck wheel rotation. Use one shared CSS transform for the rig if body bounce is enabled.",
+  "cellSize": 60,
+  "vehicles": {
+    "small": {
+      "canvasWidth": 755,
+      "canvasHeight": 327,
+      "gridX": 30,
+      "gridY": 34,
+      "columns": 8,
+      "rows": 3,
+      "cellSize": 60,
+      "slots": 24,
+      "gridWidth": 480,
+      "gridHeight": 180,
+      "wheelCenters": [
+        [
+          123,
+          277
+        ],
+        [
+          198,
+          277
+        ],
+        [
+          620,
+          286
+        ]
+      ],
+      "truckStatic": "assets/transporter_small_no_grid.webp",
+      "truckWheelsWebP": "assets/transporter_small_wheels.webp",
+      "truckWheelsGIF": "assets/transporter_small_wheels.gif",
+      "truckWheelsSVG": "assets/transporter_small_wheels.svg",
+      "gridOverlay": "assets/transporter_small_grid_overlay.webp",
+      "gridCropped": "assets/transporter_small_grid_cropped.webp"
+    },
+    "medium": {
+      "canvasWidth": 878,
+      "canvasHeight": 310,
+      "gridX": 16,
+      "gridY": 17,
+      "columns": 10,
+      "rows": 3,
+      "cellSize": 60,
+      "slots": 30,
+      "gridWidth": 600,
+      "gridHeight": 180,
+      "wheelCenters": [
+        [
+          106,
+          258
+        ],
+        [
+          179,
+          258
+        ],
+        [
+          254,
+          258
+        ],
+        [
+          749,
+          259
+        ]
+      ],
+      "truckStatic": "assets/transporter_medium_no_grid.webp",
+      "truckWheelsWebP": "assets/transporter_medium_wheels.webp",
+      "truckWheelsGIF": "assets/transporter_medium_wheels.gif",
+      "truckWheelsSVG": "assets/transporter_medium_wheels.svg",
+      "gridOverlay": "assets/transporter_medium_grid_overlay.webp",
+      "gridCropped": "assets/transporter_medium_grid_cropped.webp"
+    },
+    "large": {
+      "canvasWidth": 964,
+      "canvasHeight": 289,
+      "gridX": 24,
+      "gridY": 13,
+      "columns": 12,
+      "rows": 3,
+      "cellSize": 60,
+      "slots": 36,
+      "gridWidth": 720,
+      "gridHeight": 180,
+      "wheelCenters": [
+        [
+          108,
+          239
+        ],
+        [
+          176,
+          239
+        ],
+        [
+          245,
+          239
+        ],
+        [
+          616,
+          239
+        ],
+        [
+          854,
+          237
+        ]
+      ],
+      "truckStatic": "assets/transporter_large_no_grid.webp",
+      "truckWheelsWebP": "assets/transporter_large_wheels.webp",
+      "truckWheelsGIF": "assets/transporter_large_wheels.gif",
+      "truckWheelsSVG": "assets/transporter_large_wheels.svg",
+      "gridOverlay": "assets/transporter_large_grid_overlay.webp",
+      "gridCropped": "assets/transporter_large_grid_cropped.webp"
+    }
+  }
+}

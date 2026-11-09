@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "description": "Pollination Transporter vehicle assets with transparent surroundings; one grid tile measures 60 source-image pixels for every vehicle.",
+  "vehicles": {
+    "small": {
+      "png": "transporter_small.png",
+      "svg": "transporter_small.svg",
+      "pngWithoutGrid": "transporter_small_no_grid.png",
+      "width": 755,
+      "height": 327,
+      "gridX": 30,
+      "gridY": 34,
+      "columns": 8,
+      "rows": 3,
+      "cellSize": 60,
+      "slots": 24,
+      "accentColor": "#F2C630"
+    },
+    "medium": {
+      "png": "transporter_medium.png",
+      "svg": "transporter_medium.svg",
+      "pngWithoutGrid": "transporter_medium_no_grid.png",
+      "width": 878,
+      "height": 310,
+      "gridX": 16,
+      "gridY": 17,
+      "columns": 10,
+      "rows": 3,
+      "cellSize": 60,
+      "slots": 30,
+      "accentColor": "#1289B5"
+    },
+    "large": {
+      "png": "transporter_large.png",
+      "svg": "transporter_large.svg",
+      "pngWithoutGrid": "transporter_large_no_grid.png",
+      "width": 964,
+      "height": 289,
+      "gridX": 24,
+      "gridY": 13,
+      "columns": 12,
+      "rows": 3,
+      "cellSize": 60,
+      "slots": 36,
+      "accentColor": "#79AF48"
+    }
+  }
+}

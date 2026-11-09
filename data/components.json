@@ -1,0 +1,202 @@
+{
+  "control": [
+    {
+      "name": "AI Controlled",
+      "type": "control",
+      "driverEfficiency": 1.2,
+      "immuneToWeather": true,
+      "canDrive24Hours": true,
+      "notes": "No need to sleep, can drive 24 hours a day. Extreme weather won't stop the vehicle.",
+      "cost": 50000,
+      "power": -500
+    },
+    {
+      "name": "Driven by People",
+      "type": "control",
+      "driverEfficiency": 0.8,
+      "immuneToWeather": true,
+      "restHoursPerDay": 8,
+      "notes": "Vehicle must stop 8 hours a day for driver to rest. Extreme weather won't affect the vehicle.",
+      "cost": 20000,
+      "power": -200
+    },
+    {
+      "name": "Remote Controlled",
+      "type": "control",
+      "driverEfficiency": 1.0,
+      "canLoseSignal": true,
+      "notes": "May lose signal in extreme weather. Vehicle will stop and wait to reestablish control.",
+      "cost": 30000,
+      "power": -300
+    }
+  ],
+  "engine": [
+    {
+      "name": "Truck Engine",
+      "type": "engine",
+      "speedMultiplier": 1.0,
+      "dailyDowntime": 2,
+      "notes": "Vehicle will have to stop 2 hours a day to fill up fuel.",
+      "cost": 10000,
+      "power": 300
+    },
+    {
+      "name": "Jet Engine",
+      "type": "engine",
+      "speedMultiplier": 2.0,
+      "dailyDowntime": 2,
+      "notes": "Travel speed is double. Vehicle will have to stop 2 hours a day to fill up fuel.",
+      "cost": 40000,
+      "power": 900
+    },
+    {
+      "name": "Battery",
+      "type": "engine",
+      "speedMultiplier": 1.0,
+      "dailyDowntime": 1,
+      "notes": "Vehicle will have to stop 1 hour a day to charge.",
+      "cost": 20000,
+      "power": 600
+    },
+    {
+      "name": "Solar Battery",
+      "type": "engine",
+      "speedMultiplier": 1.0,
+      "weatherPenalty": 0.5,
+      "notes": "Free charging but slows to 50% speed in bad weather.",
+      "cost": 40000,
+      "power": 1200
+    },
+    {
+      "name": "Hybrid Engine",
+      "type": "engine",
+      "speedMultiplier": 1.2,
+      "dailyDowntime": 1,
+      "notes": "Faster than normal, stop 1 hour a day to refuel.",
+      "cost": 50000,
+      "power": 1500
+    },
+    {
+      "name": "Nuclear Engine",
+      "type": "engine",
+      "speedMultiplier": 1.5,
+      "dailyDowntime": 0,
+      "accidentRisk": 0.05,
+      "notes": "No need to stop for fuel. In a car accident there is a 5% chance the nuclear engine is damaged and the vehicle has to be repaired.",
+      "cost": 60000,
+      "power": 1800
+    }
+  ],
+  "pollinator": [
+    {
+      "name": "Honey Bee Hive",
+      "type": "pollinator",
+      "efficiency": 1.0,
+      "quantityRange": [20000, 80000],
+      "weatherDamage": true,
+      "notes": "Each Hive will have a random number of bees (between 20000 to 80000). Population will drop by half after 30 days. Extreme weather can damage the hive and cause more bee death.",
+      "cost": 1000,
+      "power": 0
+    },
+    {
+      "name": "Robot Forager",
+      "type": "pollinator",
+      "efficiency": 1.15,
+      "quantity": 20000,
+      "weatherDamageChance": 0.1,
+      "worksAtNight": false,
+      "notes": "Don't die but can be damaged in extreme weather (10% chance). Will not work at night. Fast to pollinate (15% faster speed compared to bees).",
+      "cost": 3000,
+      "power": 0
+    },
+    {
+      "name": "Smart Hive",
+      "type": "pollinator",
+      "efficiency": 1.0,
+      "quantityRange": [15000, 60000],
+      "immuneToWeather": true,
+      "notes": "Population will drop by half after 60 days. Extreme weather does no damage the hive. Random number of between 15000 and 60000 bees.",
+      "cost": 3000,
+      "power": -120
+    },
+    {
+      "name": "Robot Scout",
+      "type": "pollinator",
+      "efficiency": 1.1,
+      "quantity": 15000,
+      "requiresCharging": true,
+      "worksAtNight": true,
+      "notes": "Can be damaged by extreme weather. 15000 total. Can operate 24 hours before charging. Fast to pollinate (5% faster speed compared to bees).",
+      "cost": 2000,
+      "power": -150
+    },
+    {
+      "name": "Robot Pollinator",
+      "type": "pollinator",
+      "efficiency": 0.9,
+      "quantity": 20000,
+      "requiresCharging": true,
+      "notes": "Can't be damaged by extreme weather. Can operate 24 hours before charging. 20000 total robots. Slow to pollinate (10% lower speed compared to bees).",
+      "cost": 1000,
+      "power": -100
+    }
+  ],
+  "other": [
+    {
+      "name": "Distance and Vision Sensors",
+      "type": "component",
+      "effect": "If vehicle is remote controlled or AI controlled and this component is not included, vehicle accidents increase by 50%.",
+      "cost": 1000,
+      "power": -80
+    },
+    {
+      "name": "Repair",
+      "type": "component",
+      "effect": "Improves manual repair speed and restores 5 percentage points of transporter health after each completed travel segment.",
+      "cost": 3000,
+      "power": -80
+    },
+    {
+      "name": "Navigation GPS",
+      "type": "component",
+      "effect": "Navigation prevents being lost. Reduces travel time by 10%.",
+      "cost": 2000,
+      "power": -180
+    },
+    {
+      "name": "Robo-Pollinator Control",
+      "type": "component",
+      "effect": "If not included all Robos (Foragers, Scouts and Pollinators) will not function.",
+      "cost": 10000,
+      "power": -100
+    },
+    {
+      "name": "Small Charging Station",
+      "type": "charging",
+      "chargeCapacity": 10000,
+      "chargeTimePerBatch": 1,
+      "notes": "Can charge approximately 1000 robots at a time. Takes 1 hour to charge.",
+      "cost": 1000,
+      "power": -160
+    },
+    {
+      "name": "Large Charging Station",
+      "type": "charging",
+      "chargeCapacity": 20000,
+      "chargeTimePerBatch": 1,
+      "notes": "Can charge approximately 20000 robots at a time. Takes 1 hour to charge.",
+      "cost": 1500,
+      "power": -160
+    }
+  ],
+  "gameConfig": {
+    "maxPollinationSites": 7,
+    "weatherTypes": {
+      "clear": 1.0,
+      "rain": 0.8,
+      "extreme": 0.5
+    },
+    "routeBonusMultiplier": 1.1,
+    "vFactorMinimum": 0.3
+  }
+}

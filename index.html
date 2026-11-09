@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Great Pollination Race</title>
+  <link rel="stylesheet" href="styles/style.css" />
+</head>
+<body>
+  <div id="title-screen" class="screen">
+    <h1>The Great Pollination Race</h1>
+    <button id="start-btn" type="button">Start</button>
+    <button id="instructions-btn" type="button">Instructions</button>
+    <div id="instructions" class="popup hidden">
+      <p>Help pollinate Victoria! Build your transporter, manage power and budget, and navigate hazards.</p>
+      <p>Choose a control system, engine, pollinator crew, and support equipment before setting off.</p>
+    </div>
+  </div>
+
+  <div id="vehicle-builder" class="screen hidden">
+    <h2>Vehicle Builder</h2>
+    <section id="builder-onboarding" class="onboarding-card" aria-label="How to build your transporter">
+      <button id="dismiss-onboarding" type="button" class="onboarding-close" aria-label="Close tips">✕</button>
+      <p class="onboarding-lead"><strong>Build your transporter one step at a time.</strong> Pick a brain, an engine, your crew, and some extras — the Next button only unlocks when a step is complete. One Honey Bee Hive carries 20,000–80,000 bees; one Robot Pollinator carries 20,000 robots. Keep an eye on budget and power.</p>
+      <p class="onboarding-lead"><strong>At each stop,</strong> the <em>Pollen jar</em> shows how much that site will produce. The default is <strong>80%</strong>; good events can push it to <strong>100%</strong>, bad ones can pull it down to <strong>70%</strong>.</p>
+    </section>
+    <nav class="builder-wizard" aria-label="Build steps">
+      <ol class="builder-wizard__steps" id="builder-wizard-steps"></ol>
+    </nav>
+    <div class="builder-toolbar">
+      <label for="vehicle-choice">Transporter:</label>
+      <select id="vehicle-choice" aria-describedby="vehicle-size"></select>
+      <span id="vehicle-size"></span>
+    </div>
+    <div class="transporter-view-controls" aria-label="Transporter appearance">
+      <label for="transporter-motion">Transporter motion</label>
+      <select id="transporter-motion">
+        <option value="driving">Driving</option>
+        <option value="parked">Parked</option>
+      </select>
+      <label><input id="transporter-grid-visible" type="checkbox" checked /> Show cargo grid</label>
+      <label><input id="transporter-reduced-motion" type="checkbox" /> Reduce motion</label>
+    </div>
+    <div class="stats-row">
+      <p>Budget: <strong>$<span id="spent">0</span> spent / $<span id="budget">0</span> available</strong> (<span id="budget-remaining">0</span> remaining)</p>
+      <p>Grid: <strong><span id="spaces-used">0</span> / <span id="spaces-total">0</span> spaces used</strong> (<span id="spaces-remaining">0</span> remaining)</p>
+      <p>Power Used: <strong><span id="power">0</span>W</strong></p>
+    </div>
+    <p id="builder-feedback" class="builder-feedback" role="status" aria-live="polite"></p>
+    <div class="builder-workspace">
+      <aside id="component-selection-left" class="component-sidebar" aria-label="Vehicle control and engine components"></aside>
+      <section class="transporter-preview" aria-labelledby="transporter-preview-title">
+        <h3 id="transporter-preview-title">Transporter layout</h3>
+        <div id="transporter-grid"></div>
+        <p id="layout-note" class="layout-note"></p>
+        <div id="vehicle-preview"></div>
+      </section>
+      <aside id="component-selection-right" class="component-sidebar" aria-label="Pollinators and support components"></aside>
+    </div>
+    <div class="builder-nav">
+      <button id="wizard-back-btn" type="button" class="secondary">◀ Back</button>
+      <p class="builder-nav__hint" id="builder-nav-hint">Pick a control system to continue.</p>
+      <button id="wizard-next-btn" type="button">Next ▶</button>
+      <button id="route-btn" type="button" class="hidden">Start Route 🚀</button>
+    </div>
+  </div>
+
+  <div id="map-view" class="screen hidden">
+    <section class="location-stage" aria-labelledby="current-stop-name">
+      <img id="location-img" src="assets/Locations/GTAC%20-%20Start%20and%20end%20points.webp" alt="" />
+      <div class="location-shade"></div>
+
+      <div class="hud-top-left" aria-label="Transporter status">
+        <div class="hud-health">
+          <div class="hud-health__row">
+            <p class="hud-label">Transporter</p>
+            <p class="hud-value"><span id="vehicle-health-value">100%</span></p>
+          </div>
+          <div class="health-meter" role="progressbar" aria-label="Transporter health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+            <span id="health-meter-fill"></span>
+          </div>
+          <div class="hud-speed">
+            <div class="hud-speed__row">
+              <span class="hud-speed__label">Speed</span>
+              <span class="hud-speed__value" id="vehicle-speed-value">100%</span>
+            </div>
+            <div class="speed-meter" role="progressbar" aria-label="Transporter speed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+              <span id="speed-meter-fill"></span>
+            </div>
+            <p class="hud-sub"><span id="vehicle-speed-status">Normal speed</span></p>
+          </div>
+        </div>
+        <div class="hud-mana">
+          <div class="hud-health__row">
+            <p class="hud-label">Pollinators</p>
+            <p class="hud-value"><span id="active-population-total">0</span> <span class="hud-sub-inline">(<span id="population-survival">100%</span>)</span></p>
+          </div>
+          <div class="mana-meter" role="progressbar" aria-label="Pollinator population">
+            <span id="mana-meter-fill"></span>
+          </div>
+          <div id="population-breakdown" class="population-breakdown" aria-live="polite"></div>
+        </div>
+        <div class="hud-pollen" aria-label="Pollen jar">
+          <div class="hud-health__row">
+            <p class="hud-label">Pollen jar</p>
+            <p class="hud-value"><span id="pollen-pct">0%</span></p>
+          </div>
+          <div class="pollen-jar" role="progressbar" aria-label="Pollination collected" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span id="pollen-jar-fill"></span>
+            <span class="pollen-jar__dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
+          <p class="hud-sub"><span id="pollen-sub">Nothing pollinated yet.</span></p>
+        </div>
+      </div>
+
+      <div class="hud-top-right">
+        <div class="progress-pill" aria-label="Journey progress">
+          <p class="progress-pill__label"><span class="eyebrow">Journey</span> <strong><span id="progress-current">1</span> / <span id="progress-total">—</span></strong></p>
+          <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar">
+            <span id="progress-bar-fill"></span>
+          </div>
+          <span id="journey-score" hidden>—</span>
+        </div>
+        <button id="open-map-btn" type="button" class="hud-btn" aria-haspopup="dialog">
+          <span aria-hidden="true">◉</span> Map &amp; log
+        </button>
+        <button id="open-repair-btn" type="button" class="hud-btn hud-btn--flame">
+          <span aria-hidden="true">⚙</span> Repair
+        </button>
+      </div>
+
+      <div id="truck-pollinator-badges" class="truck-pollinator-badges" aria-hidden="true"></div>
+      <div id="journey-truck-track" class="journey-truck-track" aria-hidden="true"></div>
+
+      <aside class="component-rail" aria-label="Component status">
+        <p class="rail-title">Systems</p>
+        <div id="component-status-list"></div>
+        <p id="malfunction-warning" class="status-warning hidden"></p>
+      </aside>
+
+      <div class="location-caption-compact">
+        <p class="eyebrow">Current stop</p>
+        <h3 id="current-stop-name" tabindex="-1">Preparing route...</h3>
+        <div id="route-status" class="route-status"></div>
+      </div>
+
+      <div id="event-popup" class="event-card hidden" role="dialog" aria-modal="true" aria-labelledby="event-name" aria-describedby="event-description">
+        <img id="event-img" src="assets/components/Navigation.webp" alt="" />
+        <div class="event-copy">
+          <p class="eyebrow">Journey event</p>
+          <h3 id="event-name">Route Event</h3>
+          <p id="event-description"></p>
+        </div>
+        <div id="event-choices" class="event-choices" aria-label="Choose how to respond"></div>
+        <div id="event-result" class="event-result hidden" role="status" aria-live="polite"></div>
+        <button id="close-event" type="button" class="hidden">Continue journey</button>
+      </div>
+
+      <div id="map-modal" class="journey-modal hidden" role="dialog" aria-modal="true" aria-labelledby="journey-map-title">
+        <div class="journey-modal__backdrop" data-close-modal></div>
+        <div class="journey-modal__panel">
+          <header class="journey-modal__header">
+            <h3 id="journey-map-title">Victoria route &amp; journey log</h3>
+            <button type="button" class="hud-btn hud-btn--ghost" data-close-modal>Close</button>
+          </header>
+          <div class="journey-modal__body">
+            <div class="map-visual">
+              <img src="assets/components/Victoria Map.webp" alt="Map of Victoria showing the pollination journey route" id="map-img" />
+              <span id="map-marker" class="map-marker" aria-label="Transporter location"></span>
+            </div>
+            <div class="log-column">
+              <p class="eyebrow">Journey log</p>
+              <div id="journey-log" class="journey-log" aria-live="polite">
+                <p class="log-empty">Journey updates will appear here.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section id="repair-panel" class="repair-panel hidden" role="dialog" aria-modal="true" aria-labelledby="repair-panel-title">
+        <div class="journey-modal__backdrop" data-close-repair></div>
+        <div class="journey-modal__panel repair-panel__panel">
+          <div class="repair-panel__heading">
+            <h3 id="repair-panel-title">Repair the transporter</h3>
+            <button id="close-repair-btn" type="button" class="hud-btn hud-btn--ghost">Close</button>
+          </div>
+          <p>Each repair takes time. Choose one task at a time.</p>
+          <p id="repair-budget" aria-live="polite"></p>
+          <div id="repair-actions" class="repair-actions"></div>
+          <p id="repair-feedback" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section id="mission-summary" class="mission-summary hidden" aria-labelledby="mission-summary-title">
+        <div class="journey-modal__panel summary-panel">
+          <div class="summary-hero">
+            <p class="eyebrow">Final score</p>
+            <p class="summary-hero__score"><strong id="summary-score-value">—</strong><span>/100</span></p>
+            <p class="summary-hero__verdict" id="summary-hero-verdict">Mission complete</p>
+          </div>
+          <h2 id="mission-summary-title">Journey summary</h2>
+          <p id="mission-summary-outcome"></p>
+          <div id="mission-summary-details" class="summary-grid"></div>
+          <p>Compare your original transporter with a new design. Which changes could improve your next journey?</p>
+          <div class="summary-actions">
+            <button id="summary-map-btn" type="button" class="hud-btn hud-btn--ghost">
+              <span aria-hidden="true">◉</span> Map &amp; log
+            </button>
+            <button id="restart-journey-btn" type="button">Return to GTAC and build again</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <button id="new-build-btn" type="button" class="secondary hidden">Build A New Vehicle</button>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <div id="tour" class="tour hidden" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+    <div class="tour__backdrop"></div>
+    <div class="tour__spotlight" aria-hidden="true"></div>
+    <div class="tour__tooltip">
+      <p class="eyebrow"><span id="tour-step">1</span> / <span id="tour-total">6</span> · Quick tour</p>
+      <h3 id="tour-title">Welcome to GTAC!</h3>
+      <p id="tour-body"></p>
+      <div class="tour__controls">
+        <button id="tour-skip" type="button" class="hud-btn hud-btn--ghost">Skip tour</button>
+        <button id="tour-next" type="button" class="hud-btn">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="scripts/game.js"></script>
+</body>
+</html>

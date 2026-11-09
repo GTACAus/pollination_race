@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "unit": "grid_cells",
+  "notes": [
+    "These are recommended gameplay footprints based on the component PowerPoint.",
+    "Solar Battery includes its two solar panels as a single rectangular 3x2 footprint.",
+    "Each quantity selected for a pollinator component takes an additional 1x1 cell.",
+    "The additional Temperature and Humidity Sensors item appears in the PowerPoint but not in the current UI screenshot."
+  ],
+  "components": {
+    "ai_controlled": {
+      "category": "control",
+      "label": "AI Controlled",
+      "width": 2,
+      "height": 2,
+      "area": 4
+    },
+    "driven_by_people": {
+      "category": "control",
+      "label": "Driven by People",
+      "width": 2,
+      "height": 2,
+      "area": 4
+    },
+    "remote_controlled": {
+      "category": "control",
+      "label": "Remote Controlled",
+      "width": 2,
+      "height": 2,
+      "area": 4
+    },
+    "truck_engine": {
+      "category": "engine",
+      "label": "Truck Engine",
+      "width": 2,
+      "height": 2,
+      "area": 4
+    },
+    "jet_engine": {
+      "category": "engine",
+      "label": "Jet Engine",
+      "width": 2,
+      "height": 2,
+      "area": 4
+    },
+    "battery": {
+      "category": "engine",
+      "label": "Battery",
+      "width": 3,
+      "height": 2,
+      "area": 6
+    },
+    "solar_battery": {
+      "category": "engine",
+      "label": "Solar Battery",
+      "width": 3,
+      "height": 2,
+      "area": 6
+    },
+    "hybrid_engine": {
+      "category": "engine",
+      "label": "Hybrid Engine",
+      "width": 3,
+      "height": 2,
+      "area": 6
+    },
+    "nuclear_engine": {
+      "category": "engine",
+      "label": "Nuclear Engine",
+      "width": 3,
+      "height": 2,
+      "area": 6
+    },
+    "honey_bee_hive": {
+      "category": "pollinators",
+      "label": "Honey Bee Hive",
+      "width": 1,
+      "height": 1,
+      "area": 1
+    },
+    "robot_forager": {
+      "category": "pollinators",
+      "label": "Robot Forager",
+      "width": 1,
+      "height": 1,
+      "area": 1
+    },
+    "smart_hive": {
+      "category": "pollinators",
+      "label": "Smart Hive",
+      "width": 1,
+      "height": 1,
+      "area": 1
+    },
+    "robot_scout": {
+      "category": "pollinators",
+      "label": "Robot Scout",
+      "width": 1,
+      "height": 1,
+      "area": 1
+    },
+    "robot_pollinator": {
+      "category": "pollinators",
+      "label": "Robot Pollinator",
+      "width": 1,
+      "height": 1,
+      "area": 1
+    },
+    "distance_vision_sensors": {
+      "category": "other",
+      "label": "Distance and Vision Sensors",
+      "width": 1,
+      "height": 1,
+      "area": 1
+    },
+    "repair": {
+      "category": "other",
+      "label": "Repair",
+      "width": 1,
+      "height": 1,
+      "area": 1
+    },
+    "navigation_gps": {
+      "category": "other",
+      "label": "Navigation GPS",
+      "width": 1,
+      "height": 1,
+      "area": 1
+    },
+    "robo_pollinator_control": {
+      "category": "other",
+      "label": "Robo-Pollinator Control",
+      "width": 1,
+      "height": 1,
+      "area": 1
+    },
+    "small_charging_station": {
+      "category": "other",
+      "label": "Small Charging Station",
+      "width": 2,
+      "height": 1,
+      "area": 2
+    },
+    "large_charging_station": {
+      "category": "other",
+      "label": "Large Charging Station",
+      "width": 2,
+      "height": 2,
+      "area": 4
+    }
+  },
+  "optionalComponents": {
+    "temperature_humidity_sensors": {
+      "category": "other",
+      "label": "Temperature and Humidity Sensors",
+      "width": 1,
+      "height": 1,
+      "area": 1
+    }
+  }
+}

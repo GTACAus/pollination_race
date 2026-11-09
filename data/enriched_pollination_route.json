@@ -1,0 +1,95 @@
+[
+  {
+    "region": "GTAC (Parkville, Melbourne)",
+    "distanceToNextKm": 37.8,
+    "stopDurationDays": 0,
+    "estimatedTravelDays": 0.4,
+    "eventRiskScore": 0.1,
+    "chargingNeeds": null
+  },
+  {
+    "region": "Werribee South",
+    "distanceToNextKm": 79.7,
+    "stopDurationDays": 14,
+    "estimatedTravelDays": 0.8,
+    "eventRiskScore": 0.3,
+    "chargingNeeds": {
+      "scoutChargeCycles": 7,
+      "pollinatorChargeCycles": 5
+    }
+  },
+  {
+    "region": "Yarra Valley",
+    "distanceToNextKm": 37.2,
+    "stopDurationDays": 14,
+    "estimatedTravelDays": 0.4,
+    "eventRiskScore": 0.1,
+    "chargingNeeds": {
+      "scoutChargeCycles": 7,
+      "pollinatorChargeCycles": 5
+    }
+  },
+  {
+    "region": "Monbulk / Yarra Ranges",
+    "distanceToNextKm": 278,
+    "stopDurationDays": 14,
+    "estimatedTravelDays": 2.8,
+    "eventRiskScore": 0.6,
+    "chargingNeeds": {
+      "scoutChargeCycles": 7,
+      "pollinatorChargeCycles": 5
+    }
+  },
+  {
+    "region": "Western District / Gippsland",
+    "distanceToNextKm": 388,
+    "stopDurationDays": 14,
+    "estimatedTravelDays": 3.9,
+    "eventRiskScore": 0.6,
+    "chargingNeeds": {
+      "scoutChargeCycles": 7,
+      "pollinatorChargeCycles": 5
+    }
+  },
+  {
+    "region": "Goulburn Valley (Shepparton)",
+    "distanceToNextKm": 482,
+    "stopDurationDays": 14,
+    "estimatedTravelDays": 4.8,
+    "eventRiskScore": 0.8,
+    "chargingNeeds": {
+      "scoutChargeCycles": 7,
+      "pollinatorChargeCycles": 5
+    }
+  },
+  {
+    "region": "Mildura / Sunraysia",
+    "distanceToNextKm": 548,
+    "stopDurationDays": 14,
+    "estimatedTravelDays": 5.5,
+    "eventRiskScore": 0.8,
+    "chargingNeeds": {
+      "scoutChargeCycles": 7,
+      "pollinatorChargeCycles": 5
+    }
+  },
+  {
+    "region": "North East Victoria (Murray-Riverina)",
+    "distanceToNextKm": 326,
+    "stopDurationDays": 14,
+    "estimatedTravelDays": 3.3,
+    "eventRiskScore": 0.6,
+    "chargingNeeds": {
+      "scoutChargeCycles": 7,
+      "pollinatorChargeCycles": 5
+    }
+  },
+  {
+    "region": "Return to GTAC (Parkville)",
+    "distanceToNextKm": 0,
+    "stopDurationDays": 0,
+    "estimatedTravelDays": 0.0,
+    "eventRiskScore": 0.1,
+    "chargingNeeds": null
+  }
+]

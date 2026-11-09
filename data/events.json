@@ -1,0 +1,2013 @@
+[
+  {
+    "name": "Flash Flood in Gippsland",
+    "description": "A sudden downpour turns roads into rivers and panics your pollinators.",
+    "id": "event_01",
+    "category": "weather",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Wait for roads to reopen",
+        "baseSuccessProbability": 0.9,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 3
+        },
+        "onFailure": {
+          "timeHours": 6,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "decisionRationale": "Low risk, but waiting costs time.",
+        "id": "choice_1"
+      },
+      {
+        "label": "Find an approved alternative route",
+        "baseSuccessProbability": 0.55,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Helps plan a different route."
+          },
+          {
+            "when": {
+              "has": "Distance and Vision Sensors"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Helps detect road hazards."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 4,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": {
+              "min": 5,
+              "max": 10
+            },
+            "Smart Hive": {
+              "min": 5,
+              "max": 10
+            }
+          },
+          "vehicleHealthLossPct": {
+            "min": 5,
+            "max": 12
+          },
+          "robotDamagePct": {
+            "min": 5,
+            "max": 10
+          },
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout"
+          ]
+        },
+        "decisionRationale": "A faster response with a greater risk of delay.",
+        "id": "choice_2"
+      }
+    ],
+    "regionHint": "Gippsland"
+  },
+  {
+    "name": "Heatwave in Mildura",
+    "description": "Temperatures soar! Electronics and bugs alike begin to overheat.",
+    "id": "event_02",
+    "category": "weather",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Stop in a safe shaded area until it cools",
+        "baseSuccessProbability": 0.9,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 3
+        },
+        "onFailure": {
+          "timeHours": 5,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 4
+          }
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Continue with extra checks on pollinators",
+        "baseSuccessProbability": 0.5,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Smart Hive"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Protected hives are more resilient to weather."
+          },
+          {
+            "when": {
+              "has": "AI Controlled"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Autonomous control reduces weather-related interruptions to the vehicle."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 4,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": {
+              "min": 5,
+              "max": 10
+            },
+            "Smart Hive": {
+              "min": 5,
+              "max": 10
+            }
+          },
+          "robotDamagePct": {
+            "min": 5,
+            "max": 10
+          },
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout"
+          ],
+          "vehicleHealthLossPct": {
+            "min": 4,
+            "max": 9
+          }
+        },
+        "id": "choice_2"
+      }
+    ],
+    "regionHint": "Mildura"
+  },
+  {
+    "name": "Unexpected Frost in the Yarra Valley",
+    "description": "Jack Frost makes a surprise visit, confusing flowers and drivers alike.",
+    "id": "event_03",
+    "category": "weather",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Wait until flowers and conditions warm up",
+        "baseSuccessProbability": 0.9,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 3
+        },
+        "onFailure": {
+          "timeHours": 5,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Change the order of nearby pollination sites",
+        "baseSuccessProbability": 0.55,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Makes reordering the route easier."
+          },
+          {
+            "when": {
+              "has": "AI Controlled"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Can adjust travel without driver rest constraints."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 4,
+          "siteOutputPct": -5,
+          "vehicleHealthLossPct": {
+            "min": 2,
+            "max": 5
+          }
+        },
+        "id": "choice_2"
+      }
+    ],
+    "regionHint": "Yarra Valley"
+  },
+  {
+    "name": "Robo-Pollinator Malfunction",
+    "description": "Beep-boop… buzz… ERROR 404: Nectar not found.",
+    "id": "event_05",
+    "category": "technical",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Run diagnostics and attempt a field repair",
+        "baseSuccessProbability": 0.55,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Repair"
+            },
+            "probabilityBonus": 0.3,
+            "explanation": "On-board repair equipment helps restore the robots."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 3,
+          "robotDamagePct": {
+            "min": 8,
+            "max": 15
+          }
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Operate the remaining robots at reduced capacity",
+        "baseSuccessProbability": 0.9,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 2,
+          "siteOutputPct": -5
+        },
+        "onFailure": {
+          "timeHours": 4,
+          "siteOutputPct": -10
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "all": [
+        {
+          "any": [
+            {
+              "has": "Robot Forager"
+            },
+            {
+              "has": "Robot Scout"
+            },
+            {
+              "has": "Robot Pollinator"
+            }
+          ]
+        },
+        {
+          "has": "Robo-Pollinator Control"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Solar Panel Cracks from Hailstorm",
+    "description": "Hail hammers your high-tech solar gear. Sunny side down.",
+    "id": "event_06",
+    "category": "technical",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Stop and repair damaged solar equipment",
+        "baseSuccessProbability": 0.6,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Repair"
+            },
+            "probabilityBonus": 0.25,
+            "explanation": "On-board repair tools improve the chance of restoring the system."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 5,
+          "vehicleHealthLossPct": {
+            "min": 4,
+            "max": 8
+          },
+          "componentMalfunction": {
+            "componentName": "Solar Battery",
+            "probability": 0.3
+          }
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Continue at reduced power",
+        "baseSuccessProbability": 0.85,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 3
+        },
+        "onFailure": {
+          "timeHours": 6,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "has": "Solar Battery"
+    }
+  },
+  {
+    "name": "Charging Unit Overload",
+    "description": "Too many gadgets, not enough juice. Sparks fly — literally.",
+    "id": "event_07",
+    "category": "technical",
+    "phase": "charging",
+    "choices": [
+      {
+        "label": "Spread charging across smaller batches",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "chargingHours": 2
+        },
+        "onFailure": {
+          "chargingHours": 4
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Balance the load across available charging equipment",
+        "baseSuccessProbability": 0.55,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Large Charging Station"
+            },
+            "probabilityBonus": 0.25,
+            "explanation": "Higher-capacity charging supports the larger load."
+          },
+          {
+            "when": {
+              "has": "Repair"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Repair equipment helps address a circuit fault."
+          }
+        ],
+        "onSuccess": {
+          "chargingHours": 0.5
+        },
+        "onFailure": {
+          "chargingHours": 3,
+          "robotDamagePct": {
+            "min": 5,
+            "max": 10
+          }
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "all": [
+        {
+          "any": [
+            {
+              "has": "Small Charging Station"
+            },
+            {
+              "has": "Large Charging Station"
+            }
+          ]
+        },
+        {
+          "any": [
+            {
+              "has": "Robot Scout"
+            },
+            {
+              "has": "Robot Pollinator"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "Punctured Tire on Outback Road",
+    "description": "Thump-thump-thump. Yep, that’s a flat. Where’s the jack?",
+    "id": "event_08",
+    "category": "technical",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Fix the tyre with available tools",
+        "baseSuccessProbability": 0.65,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Repair"
+            },
+            "probabilityBonus": 0.25,
+            "explanation": "The repair module supplies tools and spares."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 4,
+          "vehicleHealthLossPct": {
+            "min": 3,
+            "max": 6
+          }
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Request roadside assistance",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 4
+        },
+        "onFailure": {
+          "timeHours": 6,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_2"
+      }
+    ]
+  },
+  {
+    "name": "Fuel Shortage in Regional Depot",
+    "description": "You reach the depot, only to find a 'Closed for Lunch' sign.",
+    "id": "event_09",
+    "category": "logistics",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Find another depot on an approved route",
+        "baseSuccessProbability": 0.55,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Helps identify an alternative route."
+          },
+          {
+            "when": {
+              "has": "Hybrid Engine"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Offers more flexibility while managing fuel use."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 5
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Wait for the depot to receive fuel",
+        "baseSuccessProbability": 0.9,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 4
+        },
+        "onFailure": {
+          "timeHours": 7,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "any": [
+        {
+          "has": "Truck Engine"
+        },
+        {
+          "has": "Jet Engine"
+        },
+        {
+          "has": "Hybrid Engine"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Bee Hive Tilts in Transport",
+    "description": "The bees are not amused by your sudden lane change.",
+    "id": "event_10",
+    "category": "ecology",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Stop safely and secure the hives again",
+        "baseSuccessProbability": 0.7,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Smart Hive"
+            },
+            "probabilityBonus": 0.15,
+            "explanation": "A more protected hive design helps reduce disturbance."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 3,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": {
+              "min": 4,
+              "max": 7
+            },
+            "Smart Hive": {
+              "min": 4,
+              "max": 7
+            }
+          }
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Drive more carefully to the next safe stopping point",
+        "baseSuccessProbability": 0.9,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Distance and Vision Sensors"
+            },
+            "probabilityBonus": 0.05,
+            "explanation": "Helps anticipate obstacles during travel."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 4,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": {
+              "min": 2,
+              "max": 4
+            },
+            "Smart Hive": {
+              "min": 2,
+              "max": 4
+            }
+          }
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "any": [
+        {
+          "has": "Honey Bee Hive"
+        },
+        {
+          "has": "Smart Hive"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Pesticide Drift from Nearby Farm",
+    "description": "A nearby farm sprays the air — and your pollinators aren’t impressed.",
+    "id": "event_11",
+    "category": "ecology",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Contact the farm and relocate to an unaffected area",
+        "baseSuccessProbability": 0.65,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.15,
+            "explanation": "Helps choose an alternative pollination site."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 5,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": {
+              "min": 6,
+              "max": 10
+            },
+            "Smart Hive": {
+              "min": 6,
+              "max": 10
+            }
+          }
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Pause pollination and shelter the hives",
+        "baseSuccessProbability": 0.9,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 3
+        },
+        "onFailure": {
+          "timeHours": 6,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": {
+              "min": 4,
+              "max": 7
+            },
+            "Smart Hive": {
+              "min": 4,
+              "max": 7
+            }
+          }
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "any": [
+        {
+          "has": "Honey Bee Hive"
+        },
+        {
+          "has": "Smart Hive"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Excellent Weather in Goulburn Valley",
+    "description": "Sunshine, calm winds, and happy flowers — it’s the perfect day!",
+    "id": "event_12",
+    "category": "opportunity",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Stay on the planned schedule and use the good conditions",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "siteOutputPct": 3
+        },
+        "onFailure": {},
+        "id": "choice_1"
+      },
+      {
+        "label": "Spend extra time pollinating at the current site",
+        "baseSuccessProbability": 0.65,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Robot Forager"
+            },
+            "probabilityBonus": 0.15,
+            "explanation": "Its higher pollination efficiency helps capture the opportunity."
+          },
+          {
+            "when": {
+              "has": "Smart Hive"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Protected bees can keep working reliably."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1,
+          "siteOutputPct": 8
+        },
+        "onFailure": {
+          "timeHours": 2,
+          "siteOutputPct": 1
+        },
+        "id": "choice_2"
+      }
+    ],
+    "regionHint": "Goulburn Valley"
+  },
+  {
+    "name": "Community Protest Against Drones",
+    "description": "Locals wave signs and demand you “Give Bees a Chance!”",
+    "id": "event_13",
+    "category": "social",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Speak with residents and agree on a suitable plan",
+        "baseSuccessProbability": 0.7,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Driven by People"
+            },
+            "probabilityBonus": 0.15,
+            "explanation": "The team can explain the plan in person."
+          },
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Makes a change in site order easier."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 4
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Use your bee hives instead of robots at this site",
+        "baseSuccessProbability": 0.8,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 1,
+          "siteOutputPct": -2
+        },
+        "onFailure": {
+          "timeHours": 3,
+          "siteOutputPct": -5
+        },
+        "availableWhen": {
+          "any": [
+            {
+              "has": "Honey Bee Hive"
+            },
+            {
+              "has": "Smart Hive"
+            }
+          ]
+        },
+        "decisionRationale": "Available only if the vehicle carries bees.",
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "all": [
+        {
+          "any": [
+            {
+              "has": "Robot Forager"
+            },
+            {
+              "has": "Robot Scout"
+            },
+            {
+              "has": "Robot Pollinator"
+            }
+          ]
+        },
+        {
+          "has": "Robo-Pollinator Control"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Local Beekeepers Share Advice",
+    "description": "Old-school beekeepers offer wise words and even wiser winks.",
+    "id": "event_14",
+    "category": "opportunity",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Ask the beekeepers how to improve your approach",
+        "baseSuccessProbability": 0.85,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Smart Hive"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Hive monitoring and handling may help apply the advice."
+          }
+        ],
+        "onSuccess": {
+          "siteOutputPct": 5
+        },
+        "onFailure": {
+          "siteOutputPct": 1
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Coordinate site timing with the beekeepers",
+        "baseSuccessProbability": 0.6,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Makes adjusting the travel schedule easier."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": -1,
+          "siteOutputPct": 3
+        },
+        "onFailure": {
+          "timeHours": 1
+        },
+        "id": "choice_2"
+      }
+    ]
+  },
+  {
+    "name": "Bird Attack Mistakes Robo-Pollinator for Prey",
+    "description": "Your sleek robot looks just enough like a flying snack.",
+    "id": "event_15",
+    "category": "ecology",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Recall robots and redeploy after checking for damage",
+        "baseSuccessProbability": 0.65,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Repair"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Can restore damaged robots after the attack."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 3,
+          "robotDamagePct": {
+            "min": 6,
+            "max": 10
+          }
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Pause robot deployment until the birds move on",
+        "baseSuccessProbability": 0.9,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 4,
+          "robotDamagePct": {
+            "min": 2,
+            "max": 5
+          }
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "all": [
+        {
+          "any": [
+            {
+              "has": "Robot Forager"
+            },
+            {
+              "has": "Robot Scout"
+            },
+            {
+              "has": "Robot Pollinator"
+            }
+          ]
+        },
+        {
+          "has": "Robo-Pollinator Control"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Native Bee Swarm Joins Effort",
+    "description": "Buzzing in from the bush, the local crew lends a hand — or wing.",
+    "id": "event_16",
+    "category": "opportunity",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Protect the flower habitat and let native bees assist naturally",
+        "baseSuccessProbability": 0.7,
+        "bonuses": [],
+        "onSuccess": {
+          "siteOutputPct": 7
+        },
+        "onFailure": {
+          "siteOutputPct": 1
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Keep the original schedule while allowing native bees to forage",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "siteOutputPct": 3
+        },
+        "onFailure": {},
+        "id": "choice_2"
+      }
+    ]
+  },
+  {
+    "name": "Flower Mutation Disrupts AI Pattern Recognition",
+    "description": "The flowers evolved... and now the robots are confused.",
+    "id": "event_17",
+    "category": "technical",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Recalibrate the robot flower-recognition system",
+        "baseSuccessProbability": 0.6,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Robot Scout"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Scouting robots provide more observations of the flowers."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 3,
+          "siteOutputPct": -8
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Switch this site to biological pollinators",
+        "baseSuccessProbability": 0.85,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 1,
+          "siteOutputPct": -2
+        },
+        "onFailure": {
+          "timeHours": 3,
+          "siteOutputPct": -6
+        },
+        "availableWhen": {
+          "any": [
+            {
+              "has": "Honey Bee Hive"
+            },
+            {
+              "has": "Smart Hive"
+            }
+          ]
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "all": [
+        {
+          "any": [
+            {
+              "has": "Robot Forager"
+            },
+            {
+              "has": "Robot Scout"
+            },
+            {
+              "has": "Robot Pollinator"
+            }
+          ]
+        },
+        {
+          "has": "Robo-Pollinator Control"
+        }
+      ]
+    },
+    "suggestedRename": "Unexpected Flower Variation Confuses Robots"
+  },
+  {
+    "name": "Magnetic Storm Disrupts GPS",
+    "description": "Satellites wobble. You may or may not be in Tasmania now.",
+    "id": "event_18",
+    "category": "technical",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Use landmarks and a preplanned route until signals recover",
+        "baseSuccessProbability": 0.7,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Driven by People"
+            },
+            "probabilityBonus": 0.15,
+            "explanation": "A driver can follow directions without live GPS."
+          },
+          {
+            "when": {
+              "has": "Distance and Vision Sensors"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Sensors support hazard detection when GPS is unreliable."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 5
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Stop safely until navigation signals return",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 4
+        },
+        "onFailure": {
+          "timeHours": 7,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "has": "Navigation GPS"
+    }
+  },
+  {
+    "name": "Late Departure Due to System Check",
+    "description": "Safety first! A friendly warning light delays your rollout.",
+    "id": "event_19",
+    "category": "technical",
+    "phase": "departure",
+    "choices": [
+      {
+        "label": "Complete the full safety and systems check",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 4,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Prioritise checks and fix any critical problems first",
+        "baseSuccessProbability": 0.5,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Repair"
+            },
+            "probabilityBonus": 0.15,
+            "explanation": "Repairs can be carried out on board."
+          },
+          {
+            "when": {
+              "has": "Distance and Vision Sensors"
+            },
+            "probabilityBonus": 0.15,
+            "explanation": "Additional checks can confirm key systems are working."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 5
+        },
+        "id": "choice_2"
+      }
+    ]
+  },
+  {
+    "name": "Driver Overestimates Fuel Range",
+    "description": "“We don’t need to stop,” they said. “We’ll make it,” they said.",
+    "id": "event_20",
+    "category": "logistics",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Stop at the nearest available fuel supplier",
+        "baseSuccessProbability": 0.7,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Helps identify a fuel stop."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 5,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Reduce fuel use and head to the next confirmed depot",
+        "baseSuccessProbability": 0.5,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Hybrid Engine"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Can make fuel use more flexible."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 6
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "all": [
+        {
+          "has": "Driven by People"
+        },
+        {
+          "any": [
+            {
+              "has": "Truck Engine"
+            },
+            {
+              "has": "Jet Engine"
+            },
+            {
+              "has": "Hybrid Engine"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "AI Routing Glitch",
+    "description": "Your AI decides the most scenic route is via Antarctica.",
+    "id": "event_21",
+    "category": "technical",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Restart and recalculate the route",
+        "baseSuccessProbability": 0.65,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Dedicated navigation offers another route reference."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 4
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Switch to a manually checked backup route",
+        "baseSuccessProbability": 0.7,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Distance and Vision Sensors"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Sensors help the vehicle detect travel hazards."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 5,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "has": "AI Controlled"
+    }
+  },
+  {
+    "name": "Bees Offload in Wrong Area",
+    "description": "Oops. The bees chose the wrong garden — but it smells nice!",
+    "id": "event_22",
+    "category": "logistics",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Verify the intended site and move the hives",
+        "baseSuccessProbability": 0.65,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Helps confirm the intended location."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 4,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": {
+              "min": 3,
+              "max": 5
+            },
+            "Smart Hive": {
+              "min": 3,
+              "max": 5
+            }
+          }
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Coordinate with the site operator before moving hives",
+        "baseSuccessProbability": 0.9,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 5,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": {
+              "min": 1,
+              "max": 3
+            },
+            "Smart Hive": {
+              "min": 1,
+              "max": 3
+            }
+          }
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "any": [
+        {
+          "has": "Honey Bee Hive"
+        },
+        {
+          "has": "Smart Hive"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Charging Drone Circuit Short",
+    "description": "A tiny zap fries your charging drone’s tiny brain.",
+    "id": "event_23",
+    "category": "technical",
+    "phase": "charging",
+    "choices": [
+      {
+        "label": "Isolate the equipment and attempt a repair",
+        "baseSuccessProbability": 0.6,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Repair"
+            },
+            "probabilityBonus": 0.25,
+            "explanation": "On-board repairs improve recovery chances."
+          }
+        ],
+        "onSuccess": {
+          "chargingHours": 1
+        },
+        "onFailure": {
+          "chargingHours": 4,
+          "robotDamagePct": {
+            "min": 4,
+            "max": 8
+          },
+          "componentMalfunction": [
+            {
+              "componentName": "Small Charging Station",
+              "probability": 0.2
+            },
+            {
+              "componentName": "Large Charging Station",
+              "probability": 0.2
+            }
+          ]
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Use a slower charging schedule to avoid the fault",
+        "baseSuccessProbability": 0.9,
+        "bonuses": [],
+        "onSuccess": {
+          "chargingHours": 2
+        },
+        "onFailure": {
+          "chargingHours": 4
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "all": [
+        {
+          "any": [
+            {
+              "has": "Small Charging Station"
+            },
+            {
+              "has": "Large Charging Station"
+            }
+          ]
+        },
+        {
+          "any": [
+            {
+              "has": "Robot Scout"
+            },
+            {
+              "has": "Robot Pollinator"
+            }
+          ]
+        }
+      ]
+    },
+    "suggestedRename": "Charging Station Circuit Short"
+  },
+  {
+    "name": "Poor Weather Forecast Miss",
+    "description": "The app said \"sunny\"... and then it snowed sideways.",
+    "id": "event_24",
+    "category": "weather",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Find a safer route after reassessing the conditions",
+        "baseSuccessProbability": 0.6,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Helps replan the journey."
+          },
+          {
+            "when": {
+              "has": "AI Controlled"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Vehicle control is less interrupted by severe weather."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 4,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": {
+              "min": 4,
+              "max": 7
+            },
+            "Smart Hive": {
+              "min": 4,
+              "max": 7
+            }
+          },
+          "vehicleHealthLossPct": {
+            "min": 3,
+            "max": 6
+          }
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Pause travel until conditions are safe",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 3
+        },
+        "onFailure": {
+          "timeHours": 6,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_2"
+      }
+    ]
+  },
+  {
+    "name": "Local Resource Theft",
+    "description": "Some tools vanish overnight. You suspect the sheep.",
+    "id": "event_25",
+    "category": "logistics",
+    "phase": "departure",
+    "choices": [
+      {
+        "label": "Report the loss and reorganise supplies",
+        "baseSuccessProbability": 0.75,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Repair"
+            },
+            "probabilityBonus": 0.15,
+            "explanation": "The on-board repair kit provides some useful tools."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 5,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Request replacement supplies from a local partner",
+        "baseSuccessProbability": 0.65,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Driven by People"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Staff can coordinate with local people."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 4
+        },
+        "id": "choice_2"
+      }
+    ]
+  },
+  {
+    "name": "Radiation Spike Near Facility",
+    "description": "A brief blip in background radiation gives the bees the jitters.",
+    "id": "event_26",
+    "category": "logistics",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Stop safely and follow the facility safety advice",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": 3
+        },
+        "onFailure": {
+          "timeHours": 6,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Choose a permitted route outside the affected area",
+        "baseSuccessProbability": 0.65,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Helps find another approved route."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 5
+        },
+        "id": "choice_2"
+      }
+    ],
+    "suggestedRename": "Unexpected Safety Alert Near Facility"
+  },
+  {
+    "name": "Emergency Police Detour",
+    "description": "“Road closed,” says the officer. “Try the scenic route!”",
+    "id": "event_27",
+    "category": "logistics",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Follow the signposted road detour",
+        "baseSuccessProbability": 0.9,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.05,
+            "explanation": "Supports navigation on the detour."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 2
+        },
+        "onFailure": {
+          "timeHours": 4,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Plan a different route using open roads",
+        "baseSuccessProbability": 0.6,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Can find another open route."
+          },
+          {
+            "when": {
+              "has": "AI Controlled"
+            },
+            "probabilityBonus": 0.05,
+            "explanation": "Can adjust route planning automatically."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1
+        },
+        "onFailure": {
+          "timeHours": 5
+        },
+        "id": "choice_2"
+      }
+    ]
+  },
+  {
+    "name": "Flower Superbloom Detected",
+    "description": "An explosion of petals lights up the horizon. Jackpot!",
+    "id": "event_28",
+    "category": "opportunity",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Visit a flower-rich area within your current pollination site",
+        "baseSuccessProbability": 0.6,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.15,
+            "explanation": "Supports route planning within the site."
+          },
+          {
+            "when": {
+              "has": "Robot Scout"
+            },
+            "probabilityBonus": 0.15,
+            "explanation": "Scouts can help identify flower-rich patches."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": 1,
+          "siteOutputPct": 9
+        },
+        "onFailure": {
+          "timeHours": 3,
+          "siteOutputPct": 1
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Continue with the planned sites",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "siteOutputPct": 4
+        },
+        "onFailure": {
+          "siteOutputPct": 1
+        },
+        "id": "choice_2"
+      }
+    ]
+  },
+  {
+    "name": "Tailwind Speeds Journey",
+    "description": "Nature gives you a gentle push in the right direction.",
+    "id": "event_29",
+    "category": "opportunity",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Maintain your planned route and safe driving speed",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": -1
+        },
+        "onFailure": {},
+        "id": "choice_1"
+      },
+      {
+        "label": "Reorganise the schedule to use the favourable conditions",
+        "baseSuccessProbability": 0.6,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Allows faster replanning."
+          },
+          {
+            "when": {
+              "has": "AI Controlled"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Can adjust the travel schedule without rest breaks."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": -2
+        },
+        "onFailure": {
+          "timeHours": 1
+        },
+        "id": "choice_2"
+      }
+    ]
+  },
+  {
+    "name": "Efficient Charging Boost",
+    "description": "Someone upgraded your plug! Fast and flashy recharging.",
+    "id": "event_30",
+    "category": "opportunity",
+    "phase": "charging",
+    "choices": [
+      {
+        "label": "Optimise charging batches to take advantage of the upgrade",
+        "baseSuccessProbability": 0.7,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Large Charging Station"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "High-capacity hardware can serve more robots per batch."
+          }
+        ],
+        "onSuccess": {
+          "chargingHours": -2
+        },
+        "onFailure": {
+          "chargingHours": 1
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Keep the usual charging schedule",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "chargingHours": -1
+        },
+        "onFailure": {},
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "all": [
+        {
+          "any": [
+            {
+              "has": "Small Charging Station"
+            },
+            {
+              "has": "Large Charging Station"
+            }
+          ]
+        },
+        {
+          "any": [
+            {
+              "has": "Robot Scout"
+            },
+            {
+              "has": "Robot Pollinator"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "AI Recalibration Optimizes Route",
+    "description": "The AI has learned from its mistakes... hopefully.",
+    "id": "event_31",
+    "category": "opportunity",
+    "phase": "travel",
+    "choices": [
+      {
+        "label": "Use the recalibrated route immediately",
+        "baseSuccessProbability": 0.6,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Provides independent route information."
+          },
+          {
+            "when": {
+              "has": "Distance and Vision Sensors"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Supports safe route following."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": -2
+        },
+        "onFailure": {
+          "timeHours": 2
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Check the new route before accepting it",
+        "baseSuccessProbability": 0.95,
+        "bonuses": [],
+        "onSuccess": {
+          "timeHours": -1
+        },
+        "onFailure": {
+          "timeHours": 1,
+          "vehicleHealthLossPct": 2,
+          "pollinatorLossPct": {
+            "Honey Bee Hive": 1,
+            "Smart Hive": 1
+          },
+          "robotDamagePct": 1,
+          "robotDamageTypes": [
+            "Robot Forager",
+            "Robot Scout",
+            "Robot Pollinator"
+          ]
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "has": "AI Controlled"
+    }
+  },
+  {
+    "name": "Beekeeper Training Pays Off",
+    "description": "Turns out bees do respond to polite instructions.",
+    "id": "event_32",
+    "category": "opportunity",
+    "phase": "pollination",
+    "choices": [
+      {
+        "label": "Apply the improved hive handling techniques",
+        "baseSuccessProbability": 0.85,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Smart Hive"
+            },
+            "probabilityBonus": 0.1,
+            "explanation": "Protected hives are easier to keep stable during handling."
+          }
+        ],
+        "onSuccess": {
+          "siteOutputPct": 6
+        },
+        "onFailure": {
+          "siteOutputPct": 1
+        },
+        "id": "choice_1"
+      },
+      {
+        "label": "Change site timing based on the training",
+        "baseSuccessProbability": 0.6,
+        "bonuses": [
+          {
+            "when": {
+              "has": "Navigation GPS"
+            },
+            "probabilityBonus": 0.2,
+            "explanation": "Helps reorder the site visits."
+          }
+        ],
+        "onSuccess": {
+          "timeHours": -1,
+          "siteOutputPct": 7
+        },
+        "onFailure": {
+          "timeHours": 2
+        },
+        "id": "choice_2"
+      }
+    ],
+    "eligibleWhen": {
+      "any": [
+        {
+          "has": "Honey Bee Hive"
+        },
+        {
+          "has": "Smart Hive"
+        }
+      ]
+    }
+  }
+]
