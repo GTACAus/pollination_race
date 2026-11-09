@@ -178,7 +178,7 @@ function bindButtons() {
     }
   });
   document.getElementById('route-btn').addEventListener('click', startRoute);
-  vehicleChoice.addEventListener('change', changeVehicle);
+  vehicleChoice.addEventListener('change', () => changeVehicle(vehicleChoice.value));
   transporterMotion.addEventListener('change', () => {
     gameData.transporterMotion = transporterMotion.value;
     updateTransporterAppearance();
@@ -191,16 +191,6 @@ function bindButtons() {
     gameData.reducedMotion = transporterReducedMotion.checked;
     updateTransporterAppearance();
   });
-  transporterGrid.addEventListener('dragover', handleTransporterDragOver);
-  transporterGrid.addEventListener('drop', handleTransporterDrop);
-  componentSelectionLeft.addEventListener('dragstart', handleComponentDragStart);
-  componentSelectionRight.addEventListener('dragstart', handleComponentDragStart);
-  componentSelectionLeft.addEventListener('dragend', handleComponentDragEnd);
-  componentSelectionRight.addEventListener('dragend', handleComponentDragEnd);
-  transporterGrid.addEventListener('dragstart', handlePlacedComponentDragStart);
-  transporterGrid.addEventListener('dragend', handleComponentDragEnd);
-  document.addEventListener('dragover', handleComponentDragOverDocument);
-  document.addEventListener('drop', handleComponentDropOutside);
   eventChoices.addEventListener('click', (event) => {
     const choiceButton = event.target.closest('[data-choice-id]');
     if (choiceButton) resolveEventChoice(choiceButton.dataset.choiceId);
@@ -291,8 +281,8 @@ function generateBudget() {
 
 async function loadGridData() {
   const [footprintsResponse, vehiclesResponse] = await Promise.all([
-    fetch('assets/components/pollination_component_grid_sizes.json'),
-    fetch('assets/Transporter%20Assets/vehicles-layered.json')
+    fetch('assets/components/pollination_component_grid_sizes.json', { cache: 'no-cache' }),
+    fetch('assets/Transporter%20Assets/vehicles-layered.json', { cache: 'no-cache' })
   ]);
   if (!footprintsResponse.ok || !vehiclesResponse.ok) {
     throw new Error('Unable to load transporter grid data.');
@@ -370,249 +360,368 @@ function getComponentImage(name) {
   return imageMap[name] || 'assets/components/Engine.webp';
 }
 
+// ---------- Builder: one source of truth ----------
+// gameData.selectedComponents + gameData.selectedVehicle are the ONLY record of
+// the build. Cards, counters, ticks and the truck layout are all redrawn from
+// that state after every change, so they can never disagree with each other.
+
+const CATEGORY_LABELS = {
+  vehicle: 'Transporter size',
+  control: 'Control',
+  engine: 'Engine',
+  pollinator: 'Pollinator squadrons',
+  other: 'Extras'
+};
+
+const COMPONENT_QUIPS = {
+  'Small Transporter': 'Parks anywhere. Fits almost nothing.',
+  'Medium Transporter': 'The Goldilocks of bee trucks.',
+  'Large Transporter': 'Turning circle: roughly one suburb.',
+  'AI Controlled': 'Never sleeps, never asks "are we there yet?"',
+  'Driven by People': 'Runs on coffee, snacks and 8 hours of sleep.',
+  'Remote Controlled': 'Works great… until it goes "searching for signal".',
+  'Truck Engine': 'Smells like diesel and nostalgia.',
+  'Jet Engine': 'Is it legal? Let’s not ask.',
+  'Battery': 'Like your phone: always 1 hour from needing a charge.',
+  'Solar Battery': 'Powered by sunshine. Sulks on cloudy days.',
+  'Hybrid Engine': 'Can’t decide what it wants to be, so it’s both.',
+  'Nuclear Engine': 'Never refuels. Please don’t crash.',
+  'Honey Bee Hive': '50,000 tiny employees. Zero union meetings.',
+  'Robot Forager': 'Shiny, speedy, scared of the dark.',
+  'Smart Hive': 'A hive with Wi-Fi and central heating.',
+  'Robot Scout': 'Night owl. Well… night bee.',
+  'Robot Pollinator': 'Slow and steady wins the… pollen?',
+  'Distance and Vision Sensors': 'Eyes in the back of the truck’s head.',
+  'Repair': 'Duct tape, but make it science.',
+  'Navigation GPS': '"Recalculating…" fewer times than you’d expect.',
+  'Robo-Pollinator Control': 'The remote for your robot bees. Don’t lose it.',
+  'Small Charging Station': 'Charges robots in small, polite batches.',
+  'Large Charging Station': 'Robot buffet. All you can charge.'
+};
+
+const VEHICLE_CARD_IMAGES = {
+  small: 'assets/components/Bee Transport Truck - Small.webp',
+  medium: 'assets/components/Bee Transport Truck - Medium.webp',
+  large: 'assets/components/Bee Transport Truck - Large.webp'
+};
+
 async function loadComponents() {
-  const response = await fetch('data/components.json');
+  const response = await fetch('data/components.json', { cache: 'no-cache' });
   const data = await response.json();
   gameData.catalog = data;
+  (data.vehicle || []).forEach((spec) => {
+    if (gameData.vehicles[spec.id]) {
+      Object.assign(gameData.vehicles[spec.id], {
+        cost: spec.cost || 0,
+        speedMultiplier: spec.speedMultiplier || 1,
+        label: spec.name
+      });
+    }
+  });
   componentSelectionLeft.innerHTML = '';
   componentSelectionRight.innerHTML = '';
 
   Object.entries(data).forEach(([category, options]) => {
-    if (!Array.isArray(options) || category === 'gameConfig') {
-      return;
-    }
-
+    if (!Array.isArray(options)) return;
     const fieldset = document.createElement('fieldset');
-    fieldset.className = 'component-group';
-    fieldset.classList.add(`component-group--${category}`);
+    fieldset.className = `component-group component-group--${category}`;
     const legend = document.createElement('legend');
-    legend.textContent = category === 'pollinator' ? 'Pollinator squadrons' : category.charAt(0).toUpperCase() + category.slice(1);
+    legend.textContent = CATEGORY_LABELS[category] || category;
     fieldset.appendChild(legend);
-
-    if (category === 'pollinator') {
-      options.forEach((part) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'component-card component-card--counter';
-        wrapper.draggable = true;
-        wrapper.dataset.category = category;
-        wrapper.dataset.name = part.name;
-
-        const img = document.createElement('img');
-        img.src = getComponentImage(part.name);
-        img.alt = part.name;
-        img.loading = 'lazy';
-
-        const info = document.createElement('div');
-        info.className = 'component-info';
-        const perUnit = part.quantityRange
-          ? `${part.quantityRange[0].toLocaleString()}–${part.quantityRange[1].toLocaleString()} per hive`
-          : part.quantity
-            ? `${part.quantity.toLocaleString()} per unit`
-            : '';
-        info.innerHTML = `<strong>${part.name}</strong><span>$${part.cost.toLocaleString()}${perUnit ? ` · ${perUnit}` : ''}</span>`;
-
-        const select = document.createElement('select');
-        select.dataset.category = category;
-        select.dataset.name = part.name;
-        select.setAttribute('aria-label', `${part.name} quantity`);
-        select.className = 'sr-only';
-        select.tabIndex = -1;
-        for (let qty = 0; qty <= 10; qty += 1) {
-          const option = document.createElement('option');
-          option.value = String(qty);
-          option.textContent = String(qty);
-          select.appendChild(option);
-        }
-        select.value = '0';
-        select.addEventListener('change', () => {
-          qtyLabel.textContent = select.value;
-          wrapper.classList.toggle('is-selected', Number(select.value) > 0);
-          updateSelectedComponents();
-        });
-
-        const counter = document.createElement('div');
-        counter.className = 'qty-counter';
-        const minusBtn = document.createElement('button');
-        minusBtn.type = 'button';
-        minusBtn.className = 'qty-btn qty-btn--minus';
-        minusBtn.setAttribute('aria-label', `Remove one ${part.name}`);
-        minusBtn.textContent = '−';
-        const qtyLabel = document.createElement('span');
-        qtyLabel.className = 'qty-label';
-        qtyLabel.textContent = '0';
-        const plusBtn = document.createElement('button');
-        plusBtn.type = 'button';
-        plusBtn.className = 'qty-btn qty-btn--plus';
-        plusBtn.setAttribute('aria-label', `Add one ${part.name}`);
-        plusBtn.textContent = '+';
-        const changeBy = (delta) => {
-          const next = Math.max(0, Math.min(10, Number(select.value) + delta));
-          if (next === Number(select.value)) return;
-          select.value = String(next);
-          select.dispatchEvent(new Event('change', { bubbles: true }));
-        };
-        minusBtn.addEventListener('click', (e) => { e.stopPropagation(); changeBy(-1); });
-        plusBtn.addEventListener('click', (e) => { e.stopPropagation(); changeBy(1); });
-        counter.append(minusBtn, qtyLabel, plusBtn);
-
-        wrapper.appendChild(img);
-        wrapper.appendChild(info);
-        wrapper.appendChild(counter);
-        wrapper.appendChild(select);
-        fieldset.appendChild(wrapper);
-      });
-    } else if (category === 'other') {
-      options.forEach((part) => {
-        const wrapper = document.createElement('label');
-        wrapper.className = 'component-card component-card--toggle';
-        wrapper.draggable = true;
-        wrapper.dataset.category = category;
-        wrapper.dataset.name = part.name;
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.name = category;
-        checkbox.value = part.name;
-        checkbox.checked = false;
-        checkbox.className = 'sr-only';
-        checkbox.addEventListener('change', () => {
-          wrapper.classList.toggle('is-selected', checkbox.checked);
-          updateSelectedComponents();
-        });
-
-        const img = document.createElement('img');
-        img.src = getComponentImage(part.name);
-        img.alt = part.name;
-        img.loading = 'lazy';
-
-        const info = document.createElement('div');
-        info.className = 'component-info';
-        info.innerHTML = `<strong>${part.name}</strong><span>$${part.cost.toLocaleString()}</span>`;
-
-        const tick = document.createElement('span');
-        tick.className = 'card-tick';
-        tick.setAttribute('aria-hidden', 'true');
-
-        wrapper.appendChild(checkbox);
-        wrapper.appendChild(img);
-        wrapper.appendChild(info);
-        wrapper.appendChild(tick);
-        fieldset.appendChild(wrapper);
-      });
-    } else {
-      options.forEach((part) => {
-        const wrapper = document.createElement('label');
-        wrapper.className = 'component-card component-card--pick';
-        wrapper.draggable = true;
-        wrapper.dataset.category = category;
-        wrapper.dataset.name = part.name;
-
-        const input = document.createElement('input');
-        input.type = 'radio';
-        input.name = category;
-        input.value = part.name;
-        input.checked = false;
-        input.className = 'sr-only';
-        input.addEventListener('change', () => {
-          // mark all siblings unselected first; browser handles radio exclusivity
-          fieldset.querySelectorAll('.component-card').forEach((c) => c.classList.remove('is-selected'));
-          wrapper.classList.add('is-selected');
-          updateSelectedComponents();
-        });
-
-        const img = document.createElement('img');
-        img.src = getComponentImage(part.name);
-        img.alt = part.name;
-        img.loading = 'lazy';
-
-        const info = document.createElement('div');
-        info.className = 'component-info';
-        info.innerHTML = `<strong>${part.name}</strong><span>$${part.cost.toLocaleString()}</span>`;
-
-        const tick = document.createElement('span');
-        tick.className = 'card-tick';
-        tick.setAttribute('aria-hidden', 'true');
-
-        wrapper.appendChild(input);
-        wrapper.appendChild(img);
-        wrapper.appendChild(info);
-        wrapper.appendChild(tick);
-        fieldset.appendChild(wrapper);
-      });
-    }
-
-    const target = category === 'control' || category === 'engine'
+    options.forEach((part) => fieldset.appendChild(createComponentCard(category, part)));
+    const target = ['vehicle', 'control', 'engine'].includes(category)
       ? componentSelectionLeft
       : componentSelectionRight;
     target.appendChild(fieldset);
   });
 
   vehicleChoice.value = gameData.selectedVehicle;
-  updateSelectedComponents();
+  updateStats();
+  renderCardStates();
 }
 
-function updateSelectedComponents() {
-  const preferredPlacement = gameData.pendingDrop;
-  gameData.pendingDrop = null;
-  const proposal = {
-    control: null,
-    engine: null,
-    pollinator: [],
-    other: []
+function findCatalogItem(category, name) {
+  return (gameData.catalog[category] || []).find((item) => item.name === name) || null;
+}
+
+function findCard(category, name) {
+  return document.querySelector(
+    `.component-card[data-category="${category}"][data-name="${CSS.escape(name)}"]`
+  );
+}
+
+function createComponentCard(category, part) {
+  const kind = category === 'pollinator' ? 'counter' : category === 'other' ? 'toggle' : 'pick';
+  const card = document.createElement('div');
+  card.className = `component-card component-card--${kind}`;
+  card.dataset.category = category;
+  card.dataset.name = part.name;
+  if (category === 'vehicle') card.dataset.vehicleId = part.id;
+  card.tabIndex = 0;
+  card.setAttribute('role', 'button');
+  card.title = part.notes || part.effect || '';
+
+  const img = document.createElement('img');
+  img.src = category === 'vehicle' ? VEHICLE_CARD_IMAGES[part.id] : getComponentImage(part.name);
+  img.alt = '';
+  img.draggable = false;
+  img.loading = 'lazy';
+
+  const info = document.createElement('div');
+  info.className = 'component-info';
+  const details = [`$${part.cost.toLocaleString()}`];
+  if (category === 'vehicle') {
+    const vehicle = gameData.vehicles[part.id];
+    if (vehicle) details.push(`${vehicle.columns * vehicle.rows} spaces`);
+    if (part.speedMultiplier && part.speedMultiplier !== 1) {
+      details.push(`${part.speedMultiplier > 1 ? '+' : ''}${Math.round((part.speedMultiplier - 1) * 100)}% speed`);
+    }
+  } else {
+    const footprint = gameData.footprints[getComponentId(part.name)];
+    if (footprint) details.push(`${footprint.width}×${footprint.height}`);
+    if (part.quantityRange) details.push(`${part.quantityRange[0] / 1000}k–${part.quantityRange[1] / 1000}k bees`);
+    else if (part.quantity) details.push(`${part.quantity.toLocaleString()} robots`);
+    if (part.power) details.push(`${part.power > 0 ? '+' : ''}${part.power}W`);
+  }
+  const strong = document.createElement('strong');
+  strong.textContent = part.name;
+  const detailSpan = document.createElement('span');
+  detailSpan.textContent = details.join(' · ');
+  info.append(strong, detailSpan);
+  const quip = COMPONENT_QUIPS[part.name];
+  if (quip) {
+    const em = document.createElement('em');
+    em.className = 'component-quip';
+    em.textContent = quip;
+    info.appendChild(em);
+  }
+  const blocked = document.createElement('span');
+  blocked.className = 'component-blocked-reason';
+  info.appendChild(blocked);
+
+  card.append(img, info);
+
+  if (kind === 'counter') {
+    const counter = document.createElement('div');
+    counter.className = 'qty-counter';
+    const minusBtn = document.createElement('button');
+    minusBtn.type = 'button';
+    minusBtn.className = 'qty-btn qty-btn--minus';
+    minusBtn.setAttribute('aria-label', `Remove one ${part.name}`);
+    minusBtn.textContent = '−';
+    const qtyLabel = document.createElement('span');
+    qtyLabel.className = 'qty-label';
+    qtyLabel.textContent = '0';
+    const plusBtn = document.createElement('button');
+    plusBtn.type = 'button';
+    plusBtn.className = 'qty-btn qty-btn--plus';
+    plusBtn.setAttribute('aria-label', `Add one ${part.name}`);
+    plusBtn.textContent = '+';
+    [minusBtn, plusBtn].forEach((btn) => btn.addEventListener('pointerdown', (e) => e.stopPropagation()));
+    minusBtn.addEventListener('click', (e) => { e.stopPropagation(); changePollinatorQuantity(part.name, -1); });
+    plusBtn.addEventListener('click', (e) => { e.stopPropagation(); changePollinatorQuantity(part.name, 1); });
+    counter.append(minusBtn, qtyLabel, plusBtn);
+    card.appendChild(counter);
+  } else {
+    const tick = document.createElement('span');
+    tick.className = 'card-tick';
+    tick.setAttribute('aria-hidden', 'true');
+    card.appendChild(tick);
+  }
+
+  card.addEventListener('click', () => {
+    if (dragState.suppressClick) return;
+    activateCard(category, part.name);
+  });
+  card.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      activateCard(category, part.name);
+    } else if (category === 'pollinator' && (event.key === '-' || event.key === 'Backspace' || event.key === 'Delete')) {
+      event.preventDefault();
+      changePollinatorQuantity(part.name, -1);
+    }
+  });
+  if (category !== 'vehicle') {
+    card.addEventListener('pointerdown', (event) => beginPointerDrag(event, {
+      category,
+      name: part.name,
+      source: 'card',
+      el: card
+    }));
+  }
+  return card;
+}
+
+function cloneSelection(selection = gameData.selectedComponents) {
+  return {
+    control: selection.control,
+    engine: selection.engine,
+    pollinator: selection.pollinator.map((item) => ({ ...item })),
+    other: selection.other.map((item) => ({ ...item }))
   };
+}
 
-  const controlSelection = document.querySelector('input[name="control"]:checked');
-  if (controlSelection) {
-    proposal.control = (gameData.catalog.control || []).find((item) => item.name === controlSelection.value) || null;
-  }
-
-  const engineSelection = document.querySelector('input[name="engine"]:checked');
-  if (engineSelection) {
-    proposal.engine = (gameData.catalog.engine || []).find((item) => item.name === engineSelection.value) || null;
-  }
-
-  const pollinatorParts = Array.from(document.querySelectorAll('select[data-category="pollinator"]'))
-    .map((select) => ({
-      name: select.dataset.name,
-      quantity: Number(select.value)
-    }))
-    .filter((part) => part.quantity > 0);
-
-  const pollinatorCatalog = gameData.catalog.pollinator || [];
-  proposal.pollinator = pollinatorParts.map((part) => {
-    const catalogItem = pollinatorCatalog.find((item) => item.name === part.name);
-    return {
+function setPollinatorQuantity(proposal, name, quantity) {
+  const catalogItem = findCatalogItem('pollinator', name);
+  if (!catalogItem) return;
+  const qty = Math.max(0, Math.min(10, quantity));
+  proposal.pollinator = proposal.pollinator.filter((item) => item.name !== name);
+  if (qty > 0) {
+    proposal.pollinator.push({
       ...catalogItem,
-      quantity: part.quantity,
-      cost: (catalogItem?.cost || 0) * part.quantity,
-      power: (catalogItem?.power || 0) * part.quantity
-    };
-  });
+      quantity: qty,
+      cost: catalogItem.cost * qty,
+      power: (catalogItem.power || 0) * qty
+    });
+    // Keep catalogue order so the layout is stable.
+    const order = (gameData.catalog.pollinator || []).map((item) => item.name);
+    proposal.pollinator.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
+  }
+}
 
-  const otherCatalog = gameData.catalog.other || [];
-  const checkedOther = Array.from(document.querySelectorAll('input[name="other"]:checked'));
-  proposal.other = checkedOther.map((checkbox) => {
-    const match = otherCatalog.find((item) => item.name === checkbox.value);
-    return { ...match };
-  });
+function getPollinatorQuantity(name, selection = gameData.selectedComponents) {
+  return selection.pollinator.find((item) => item.name === name)?.quantity || 0;
+}
 
-  const validation = validateBuild(proposal, gameData.selectedVehicle, preferredPlacement);
-  if (!validation.valid) {
-    builderFeedback.textContent = validation.message;
-    syncSelectionControls();
+function activateCard(category, name) {
+  if (category === 'vehicle') {
+    const spec = findCatalogItem('vehicle', name);
+    if (spec) changeVehicle(spec.id);
     return;
   }
-  commitBuild(proposal, validation);
-  const hasRobots = proposal.pollinator.some((item) => ROBOT_POLLINATORS.has(item.name));
-  const hasRobotControl = proposal.other.some((item) => item.name === 'Robo-Pollinator Control');
-  if (hasRobots && !hasRobotControl) {
-    builderFeedback.textContent = 'Robot pollinators need Robo-Pollinator Control to function. Add that component; otherwise only a bee hive can keep the journey running.';
+  if (category === 'pollinator') {
+    changePollinatorQuantity(name, 1);
+    return;
   }
-  if (typeof updateWizardHint === 'function') updateWizardHint();
+  const item = findCatalogItem(category, name);
+  if (!item) return;
+  const proposal = cloneSelection();
+  let message;
+  if (category === 'control' || category === 'engine') {
+    if (proposal[category]?.name === name) {
+      proposal[category] = null;
+      message = `${name} removed from the transporter.`;
+    } else {
+      const replaced = proposal[category]?.name;
+      proposal[category] = item;
+      message = replaced ? `${replaced} swapped for ${name}.` : `${name} fitted.`;
+    }
+  } else if (category === 'other') {
+    if (proposal.other.some((part) => part.name === name)) {
+      proposal.other = proposal.other.filter((part) => part.name !== name);
+      message = `${name} removed from the transporter.`;
+    } else {
+      proposal.other.push({ ...item });
+      message = `${name} added.`;
+    }
+  }
+  applyProposal(proposal, { message, card: findCard(category, name) });
 }
 
-function getTotalCost(components) {
-  return [
+function changePollinatorQuantity(name, delta) {
+  const current = getPollinatorQuantity(name);
+  const next = current + delta;
+  const card = findCard('pollinator', name);
+  if (next < 0) return false;
+  if (next > 10) {
+    builderFeedback.textContent = `You can carry at most 10 ${name} units.`;
+    flashCardRejected(card);
+    return false;
+  }
+  const proposal = cloneSelection();
+  setPollinatorQuantity(proposal, name, next);
+  return applyProposal(proposal, {
+    message: delta > 0 ? `${name} added (${next} on board).` : `${name} removed (${next} on board).`,
+    card
+  });
+}
+
+function applyProposal(proposal, {
+  preferred = null,
+  vehicleId = gameData.selectedVehicle,
+  message = '',
+  card = null
+} = {}) {
+  const validation = validateBuild(proposal, vehicleId, preferred);
+  if (!validation.valid) {
+    builderFeedback.textContent = validation.message;
+    builderFeedback.classList.add('is-error');
+    flashCardRejected(card);
+    renderCardStates();
+    return false;
+  }
+  commitBuild(proposal, validation, vehicleId);
+  builderFeedback.classList.remove('is-error');
+  const hasRobots = proposal.pollinator.some((item) => ROBOT_POLLINATORS.has(item.name));
+  const hasRobotControl = proposal.other.some((item) => item.name === 'Robo-Pollinator Control');
+  builderFeedback.textContent = hasRobots && !hasRobotControl
+    ? `${message} Robot pollinators need Robo-Pollinator Control to work.`.trim()
+    : message;
+  renderCardStates();
+  if (typeof updateWizardHint === 'function') updateWizardHint();
+  return true;
+}
+
+function flashCardRejected(card) {
+  if (!card) return;
+  card.classList.remove('is-rejected');
+  void card.offsetWidth;
+  card.classList.add('is-rejected');
+  setTimeout(() => card.classList.remove('is-rejected'), 600);
+}
+
+function isCardSelected(category, name) {
+  const s = gameData.selectedComponents;
+  if (category === 'vehicle') return findCatalogItem('vehicle', name)?.id === gameData.selectedVehicle;
+  if (category === 'control' || category === 'engine') return s[category]?.name === name;
+  if (category === 'pollinator') return getPollinatorQuantity(name) > 0;
+  if (category === 'other') return s.other.some((item) => item.name === name);
+  return false;
+}
+
+/** Quick (no layout search) check of why adding this card would fail. */
+function getBlockedReason(category, name) {
+  if (category === 'vehicle' || isCardSelected(category, name) && category !== 'pollinator') return '';
+  const item = findCatalogItem(category, name);
+  if (!item) return '';
+  const vehicle = gameData.vehicles[gameData.selectedVehicle];
+  const s = gameData.selectedComponents;
+  const replaced = (category === 'control' || category === 'engine') ? s[category] : null;
+  const extraCost = item.cost - (replaced?.cost || 0);
+  if (extraCost > gameData.budget - getTotalCost(s)) return 'Not enough budget';
+  const footprint = gameData.footprints[getComponentId(name)];
+  const used = gameData.placement.reduce((sum, part) => sum + part.width * part.height, 0);
+  const freed = replaced ? (gameData.footprints[getComponentId(replaced.name)]?.area || 0) : 0;
+  if (footprint && footprint.width * footprint.height > vehicle.columns * vehicle.rows - used + freed) {
+    return 'No room in this truck';
+  }
+  if (category === 'pollinator' && getPollinatorQuantity(name) >= 10) return 'Maximum 10';
+  return '';
+}
+
+function renderCardStates() {
+  document.querySelectorAll('.component-card').forEach((card) => {
+    const { category, name } = card.dataset;
+    const selected = isCardSelected(category, name);
+    card.classList.toggle('is-selected', selected);
+    card.setAttribute('aria-pressed', String(selected));
+    const qty = card.querySelector('.qty-label');
+    if (qty) qty.textContent = String(getPollinatorQuantity(name));
+    const reason = getBlockedReason(category, name);
+    card.classList.toggle('is-blocked', Boolean(reason));
+    const reasonEl = card.querySelector('.component-blocked-reason');
+    if (reasonEl) reasonEl.textContent = reason;
+  });
+  vehicleChoice.value = gameData.selectedVehicle;
+}
+
+function getVehicleCost(vehicleId = gameData.selectedVehicle) {
+  return gameData.vehicles[vehicleId]?.cost || 0;
+}
+
+function getTotalCost(components, vehicleId = gameData.selectedVehicle) {
+  return getVehicleCost(vehicleId) + [
     components.control,
     components.engine,
     ...components.pollinator,
@@ -644,7 +753,6 @@ function getComponentInstances(components) {
   components.other.forEach((item) => addInstances(item, 'other'));
   return instances;
 }
-
 function calculatePlacement(components, vehicleId, preferredPlacement = null) {
   const vehicle = gameData.vehicles[vehicleId];
   const instances = getComponentInstances(components)
@@ -652,6 +760,13 @@ function calculatePlacement(components, vehicleId, preferredPlacement = null) {
       b.width - a.width || a.componentId.localeCompare(b.componentId) ||
       a.instanceId.localeCompare(b.instanceId));
   const occupied = Array.from({ length: vehicle.rows }, () => Array(vehicle.columns).fill(false));
+  const previousPositions = new Map(
+    vehicleId === gameData.selectedVehicle
+      ? gameData.placement.map((item) => [item.instanceId, { col: item.col, row: item.row }])
+      : []
+  );
+  // Parts already on the truck are placed first (in their old spots), new ones after.
+  instances.sort((a, b) => Number(previousPositions.has(b.instanceId)) - Number(previousPositions.has(a.instanceId)));
   let searchNodes = 0;
   const searchLimit = 50000;
 
@@ -689,8 +804,18 @@ function calculatePlacement(components, vehicleId, preferredPlacement = null) {
     if (searchNodes >= searchLimit) return false;
 
     const item = instances[index];
+    // Try the part's current spot first so the player's layout stays put.
+    const candidates = [];
+    const previous = previousPositions.get(item.instanceId);
+    if (previous) candidates.push(previous);
     for (let row = 0; row <= vehicle.rows - item.height; row += 1) {
       for (let col = 0; col <= vehicle.columns - item.width; col += 1) {
+        candidates.push({ col, row });
+      }
+    }
+    for (const { col, row } of candidates) {
+      if (col < 0 || row < 0 || col + item.width > vehicle.columns || row + item.height > vehicle.rows) continue;
+      {
         searchNodes += 1;
         if (searchNodes > searchLimit) return false;
 
@@ -726,7 +851,7 @@ function calculatePlacement(components, vehicleId, preferredPlacement = null) {
 }
 
 function validateBuild(components, vehicleId, preferredPlacement = null) {
-  const totalCost = getTotalCost(components);
+  const totalCost = getTotalCost(components, vehicleId);
   const budgetShortfall = Math.max(0, totalCost - gameData.budget);
   const result = calculatePlacement(components, vehicleId, preferredPlacement);
   const capacity = gameData.vehicles[vehicleId].columns * gameData.vehicles[vehicleId].rows;
@@ -753,165 +878,73 @@ function validateBuild(components, vehicleId, preferredPlacement = null) {
   return { valid: true, placement: result.placement };
 }
 
+function placementHasOverlap(placement, vehicleId) {
+  const vehicle = gameData.vehicles[vehicleId];
+  const seen = new Set();
+  return placement.some((item) => {
+    if (item.col < 0 || item.row < 0 ||
+      item.col + item.width > vehicle.columns ||
+      item.row + item.height > vehicle.rows) return true;
+    for (let y = item.row; y < item.row + item.height; y += 1) {
+      for (let x = item.col; x < item.col + item.width; x += 1) {
+        const key = `${x},${y}`;
+        if (seen.has(key)) return true;
+        seen.add(key);
+      }
+    }
+    return false;
+  });
+}
+
 function commitBuild(components, validation, vehicleId = gameData.selectedVehicle) {
+  let placement = validation.placement;
+  // Belt and braces: never draw two parts in the same cell.
+  if (placementHasOverlap(placement, vehicleId)) {
+    placement = calculatePlacement(components, vehicleId).placement || [];
+  }
   gameData.selectedComponents = components;
   gameData.selectedVehicle = vehicleId;
-  gameData.placement = validation.placement;
+  gameData.placement = placement;
   vehicleChoice.value = vehicleId;
   builderFeedback.textContent = '';
   updateStats();
 }
 
+// Kept for callers elsewhere in the file: cards are always redrawn from state.
 function syncSelectionControls() {
-  const { control, engine, pollinator, other } = gameData.selectedComponents;
-  document.querySelectorAll('input[name="control"]').forEach((input) => {
-    input.checked = input.value === control?.name;
-  });
-  document.querySelectorAll('input[name="engine"]').forEach((input) => {
-    input.checked = input.value === engine?.name;
-  });
-  document.querySelectorAll('input[name="other"]').forEach((input) => {
-    input.checked = other.some((item) => item.name === input.value);
-  });
-  document.querySelectorAll('select[data-category="pollinator"]').forEach((select) => {
-    const selected = pollinator.find((item) => item.name === select.dataset.name);
-    select.value = String(selected?.quantity || 0);
-  });
-}
-
-function handleComponentDragStart(event) {
-  const card = event.target.closest('.component-card');
-  if (!card || !event.dataTransfer) return;
-
-  gameData.activeDrag = {
-    category: card.dataset.category,
-    name: card.dataset.name
-  };
-  transporterGrid.querySelector('.truck-rig')?.classList.add('is-interacting');
-  event.dataTransfer.effectAllowed = 'copy';
-  event.dataTransfer.setData('application/json', JSON.stringify({
-    category: gameData.activeDrag.category,
-    name: gameData.activeDrag.name
-  }));
-  card.classList.add('is-dragging');
-  event.dataTransfer.setData('text/plain', card.dataset.name);
-}
-
-function handlePlacedComponentDragStart(event) {
-  const component = event.target.closest('.placed-component:not(.placement-preview)');
-  if (!component || !event.dataTransfer) return;
-
-  gameData.activeDrag = {
-    action: 'move',
-    category: component.dataset.category,
-    name: component.dataset.name,
-    componentId: getComponentId(component.dataset.name),
-    instanceId: component.dataset.instanceId
-  };
-  component.closest('.truck-rig')?.classList.add('is-interacting');
-  event.dataTransfer.effectAllowed = 'move';
-  event.dataTransfer.setData('application/json', JSON.stringify(gameData.activeDrag));
-  event.dataTransfer.setData('text/plain', component.dataset.name);
-  component.classList.add('is-dragging');
-}
-
-function handleComponentDragOverDocument(event) {
-  if (gameData.activeDrag?.action === 'move') {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }
-}
-
-function handleComponentDropOutside(event) {
-  if (gameData.activeDrag?.action !== 'move' || transporterGrid.contains(event.target)) return;
-  event.preventDefault();
-  removePlacedComponent(gameData.activeDrag);
+  renderCardStates();
 }
 
 function removePlacedComponent(component) {
-  const proposal = {
-    control: gameData.selectedComponents.control,
-    engine: gameData.selectedComponents.engine,
-    pollinator: gameData.selectedComponents.pollinator.map((item) => ({ ...item })),
-    other: gameData.selectedComponents.other.map((item) => ({ ...item }))
-  };
-
+  const proposal = cloneSelection();
   if (component.category === 'control') {
     proposal.control = null;
   } else if (component.category === 'engine') {
     proposal.engine = null;
   } else if (component.category === 'pollinator') {
-    const squad = proposal.pollinator.find((item) => item.name === component.name);
-    if (squad) {
-      squad.quantity -= 1;
-      squad.cost = (gameData.catalog.pollinator.find((item) => item.name === component.name)?.cost || 0) * squad.quantity;
-      squad.power = (gameData.catalog.pollinator.find((item) => item.name === component.name)?.power || 0) * squad.quantity;
-      if (squad.quantity <= 0) {
-        proposal.pollinator = proposal.pollinator.filter((item) => item.name !== component.name);
-      }
-    }
+    setPollinatorQuantity(proposal, component.name, getPollinatorQuantity(component.name) - 1);
   } else if (component.category === 'other') {
     proposal.other = proposal.other.filter((item) => item.name !== component.name);
   }
-
-  const validation = validateBuild(proposal, gameData.selectedVehicle);
-  if (!validation.valid) {
-    builderFeedback.textContent = validation.message;
-    return;
-  }
-
-  commitBuild(proposal, validation);
-  syncSelectionControls();
-  builderFeedback.textContent = `${component.name} removed from the transporter.`;
-}
-
-function handleTransporterDragOver(event) {
-  if (event.dataTransfer?.types.includes('application/json')) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'copy';
-    updatePlacementPreview(event.clientX, event.clientY);
-  }
+  applyProposal(proposal, { message: `${component.name} removed from the transporter.` });
 }
 
 function getDragProposal(draggedComponent) {
   const { category, name } = draggedComponent;
-  const catalogItem = (gameData.catalog[category] || []).find((item) => item.name === name);
+  const catalogItem = findCatalogItem(category, name);
   if (!catalogItem) return null;
-
-  const proposal = {
-    control: gameData.selectedComponents.control,
-    engine: gameData.selectedComponents.engine,
-    pollinator: gameData.selectedComponents.pollinator.map((item) => ({ ...item })),
-    other: gameData.selectedComponents.other.map((item) => ({ ...item }))
-  };
+  const proposal = cloneSelection();
   let instanceNumber = 1;
 
-  if (category === 'control') {
-    proposal.control = catalogItem;
-  } else if (category === 'engine') {
-    proposal.engine = catalogItem;
+  if (category === 'control' || category === 'engine') {
+    proposal[category] = catalogItem;
   } else if (category === 'pollinator') {
-    const existing = proposal.pollinator.find((item) => item.name === name);
-    const quantity = existing?.quantity || 0;
-    if (quantity >= 10) {
-      return null;
-    }
+    const quantity = getPollinatorQuantity(name);
+    if (quantity >= 10) return null;
     instanceNumber = quantity + 1;
-    if (existing) {
-      existing.quantity += 1;
-      existing.cost = catalogItem.cost * existing.quantity;
-      existing.power = catalogItem.power * existing.quantity;
-    } else {
-      proposal.pollinator.push({
-        ...catalogItem,
-        quantity: 1,
-        cost: catalogItem.cost,
-        power: catalogItem.power
-      });
-    }
+    setPollinatorQuantity(proposal, name, quantity + 1);
   } else if (category === 'other') {
-    const existing = proposal.other.some((item) => item.name === name);
-    if (!existing) proposal.other.push(catalogItem);
+    if (!proposal.other.some((item) => item.name === name)) proposal.other.push({ ...catalogItem });
   } else {
     return null;
   }
@@ -925,182 +958,225 @@ function getDragProposal(draggedComponent) {
   };
 }
 
-function updatePlacementPreview(clientX, clientY) {
+// ---------- Pointer drag & drop (mouse, pen and touch) ----------
+const dragState = { suppressClick: false, ghost: null, source: null, overTruck: false };
+
+function beginPointerDrag(event, info) {
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
+  if (event.target.closest('.qty-btn, .placed-component__remove')) return;
+  if (builderScreen.classList.contains('hidden')) return;
+  const pointerId = event.pointerId;
+  const startX = event.clientX;
+  const startY = event.clientY;
+  let started = false;
+
+  const onMove = (e) => {
+    if (e.pointerId !== pointerId) return;
+    if (!started) {
+      if (Math.hypot(e.clientX - startX, e.clientY - startY) < 6) return;
+      started = true;
+      startDragVisual(info, e.clientX, e.clientY);
+    }
+    e.preventDefault();
+    updateDrag(e.clientX, e.clientY);
+  };
+  const cleanup = () => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onCancel);
+  };
+  const onUp = (e) => {
+    if (e.pointerId !== pointerId) return;
+    cleanup();
+    if (!started) return;
+    dragState.suppressClick = true;
+    setTimeout(() => { dragState.suppressClick = false; }, 0);
+    finishDrag(e.clientX, e.clientY);
+  };
+  const onCancel = (e) => {
+    if (e.pointerId !== pointerId) return;
+    cleanup();
+    if (started) endDragVisual();
+  };
+  window.addEventListener('pointermove', onMove, { passive: false });
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onCancel);
+}
+
+function getRigCellSizePx() {
   const art = transporterGrid.querySelector('.truck-rig');
   const vehicle = gameData.vehicles[gameData.selectedVehicle];
-  if (!art || !vehicle || !gameData.activeDrag) return;
+  if (!art || !vehicle) return 40;
+  return art.getBoundingClientRect().width * vehicle.cellSize / vehicle.width;
+}
+
+function startDragVisual(info, x, y) {
+  const isMove = info.source === 'placed';
+  gameData.activeDrag = {
+    action: isMove ? 'move' : 'add',
+    category: info.category,
+    name: info.name,
+    componentId: getComponentId(info.name),
+    instanceId: info.instanceId
+  };
+  dragState.source = info.el;
+  info.el?.classList.add('is-dragging');
+  transporterGrid.querySelector('.truck-rig')?.classList.add('is-interacting');
+  document.body.classList.add('is-dragging-part');
+
+  const footprint = gameData.footprints[getComponentId(info.name)] || { width: 1, height: 1 };
+  const cell = getRigCellSizePx();
+  const ghost = document.createElement('div');
+  ghost.className = 'drag-ghost';
+  ghost.style.width = `${footprint.width * cell}px`;
+  ghost.style.height = `${footprint.height * cell}px`;
+  const img = document.createElement('img');
+  img.src = getComponentImage(info.name);
+  img.alt = '';
+  ghost.appendChild(img);
+  document.body.appendChild(ghost);
+  dragState.ghost = ghost;
+  updateDrag(x, y);
+}
+
+function updateDrag(x, y) {
+  const ghost = dragState.ghost;
+  if (ghost) {
+    ghost.style.left = `${x}px`;
+    ghost.style.top = `${y}px`;
+  }
+  const dragged = gameData.activeDrag;
+  if (!dragged) return;
+  const cell = getDropCell(x, y, dragged.name);
+  dragState.overTruck = Boolean(cell);
+  ghost?.classList.toggle('is-over-truck', Boolean(cell));
+  if (cell) {
+    updatePlacementPreview(cell.col, cell.row);
+  } else {
+    transporterGrid.querySelector('.placement-preview')?.remove();
+    transporterGrid.classList.remove('is-drop-target');
+    builderFeedback.classList.remove('is-error');
+    builderFeedback.textContent = dragged.action === 'move'
+      ? `Let go here to take ${dragged.name} off the transporter.`
+      : `Drag ${dragged.name} onto the transporter.`;
+  }
+}
+
+/** Grid cell for the top-left of the dragged part, centred under the pointer. */
+function getDropCell(clientX, clientY, name) {
+  const art = transporterGrid.querySelector('.truck-rig');
+  const vehicle = gameData.vehicles[gameData.selectedVehicle];
+  if (!art || !vehicle) return null;
+  const bounds = art.getBoundingClientRect();
+  const margin = 24;
+  if (clientX < bounds.left - margin || clientX > bounds.right + margin ||
+    clientY < bounds.top - margin || clientY > bounds.bottom + margin) return null;
+  const footprint = gameData.footprints[getComponentId(name)] || { width: 1, height: 1 };
+  const sourceX = ((clientX - bounds.left) / bounds.width) * vehicle.width;
+  const sourceY = ((clientY - bounds.top) / bounds.height) * vehicle.height;
+  const col = Math.round((sourceX - vehicle.gridX) / vehicle.cellSize - footprint.width / 2);
+  const row = Math.round((sourceY - vehicle.gridY) / vehicle.cellSize - footprint.height / 2);
+  return {
+    col: Math.max(0, Math.min(vehicle.columns - footprint.width, col)),
+    row: Math.max(0, Math.min(vehicle.rows - footprint.height, row))
+  };
+}
+
+function getDropValidation(dragged, col, row) {
+  const drop = dragged.action === 'move'
+    ? {
+      proposal: gameData.selectedComponents,
+      preferredPlacement: { componentId: dragged.componentId, instanceId: dragged.instanceId }
+    }
+    : getDragProposal(dragged);
+  if (!drop) {
+    return { drop, validation: { valid: false, message: `You can carry at most 10 ${dragged.name} units.` } };
+  }
+  return {
+    drop,
+    validation: validateBuild(drop.proposal, gameData.selectedVehicle, { ...drop.preferredPlacement, col, row })
+  };
+}
+
+function updatePlacementPreview(col, row) {
+  const art = transporterGrid.querySelector('.truck-rig');
+  const vehicle = gameData.vehicles[gameData.selectedVehicle];
+  const dragged = gameData.activeDrag;
+  if (!art || !vehicle || !dragged) return;
+  const footprint = getFootprint(dragged.name);
+  const { validation } = getDropValidation(dragged, col, row);
 
   let preview = art.querySelector('.placement-preview');
   if (!preview) {
     preview = document.createElement('div');
     preview.className = 'placed-component placement-preview';
-    const icon = document.createElement('img');
-    icon.alt = '';
-    icon.setAttribute('aria-hidden', 'true');
-    preview.appendChild(icon);
     art.querySelector('.truck-rig__cargo').appendChild(preview);
   }
-
-  const dragged = gameData.activeDrag;
-  preview.classList.add(`placed-component--${dragged.category}`);
-  const catalogItem = (gameData.catalog[dragged.category] || [])
-    .find((item) => item.name === dragged.name);
-  if (!catalogItem) return;
-
-  const footprint = getFootprint(dragged.name);
-  const bounds = art.getBoundingClientRect();
-  const sourceX = ((clientX - bounds.left) / bounds.width) * vehicle.width;
-  const sourceY = ((clientY - bounds.top) / bounds.height) * vehicle.height;
-  const col = Math.floor((sourceX - vehicle.gridX) / vehicle.cellSize);
-  const row = Math.floor((sourceY - vehicle.gridY) / vehicle.cellSize);
-  const isMovingPlacedComponent = dragged.action === 'move';
-  const drop = isMovingPlacedComponent
-    ? {
-      proposal: gameData.selectedComponents,
-      preferredPlacement: {
-        componentId: dragged.componentId,
-        instanceId: dragged.instanceId
-      }
-    }
-    : getDragProposal(dragged);
-  const capacityFits = col >= 0 && row >= 0 &&
-    col + footprint.width <= vehicle.columns &&
-    row + footprint.height <= vehicle.rows;
-  const validation = capacityFits && drop
-    ? validateBuild(drop.proposal, gameData.selectedVehicle, {
-      ...drop.preferredPlacement,
-      col,
-      row
-    })
-    : {
-      valid: false,
-      message: capacityFits
-        ? 'The maximum quantity for this pollinator squad is already selected.'
-        : 'Keep the whole component inside the transporter grid.'
-    };
-
   preview.style.left = `${((vehicle.gridX + col * vehicle.cellSize) / vehicle.width) * 100}%`;
   preview.style.top = `${((vehicle.gridY + row * vehicle.cellSize) / vehicle.height) * 100}%`;
   preview.style.width = `${(footprint.width * vehicle.cellSize / vehicle.width) * 100}%`;
   preview.style.height = `${(footprint.height * vehicle.cellSize / vehicle.height) * 100}%`;
-  preview.querySelector('img').src = getComponentImage(dragged.name);
   preview.classList.toggle('is-valid', validation.valid);
   preview.classList.toggle('is-invalid', !validation.valid);
   transporterGrid.classList.add('is-drop-target');
-  builderFeedback.textContent = validation.message || `Place ${dragged.name} at column ${col + 1}, row ${row + 1}.`;
+  builderFeedback.classList.toggle('is-error', !validation.valid);
+  builderFeedback.textContent = validation.valid
+    ? `Drop ${dragged.name} here — other parts will shuffle to make room.`
+    : validation.message;
 }
 
-function handleTransporterDrop(event) {
-  event.preventDefault();
-  transporterGrid.classList.remove('is-drop-target');
-  transporterGrid.querySelector('.placement-preview')?.remove();
-  componentSelectionLeft.querySelectorAll('.is-dragging').forEach((card) => card.classList.remove('is-dragging'));
-  componentSelectionRight.querySelectorAll('.is-dragging').forEach((card) => card.classList.remove('is-dragging'));
-  if (gameData.activeDrag?.action === 'move') {
-    const dragged = gameData.activeDrag;
-    const art = transporterGrid.querySelector('.truck-rig');
-    const vehicle = gameData.vehicles[gameData.selectedVehicle];
-    if (!art || !vehicle) return;
-
-    const bounds = art.getBoundingClientRect();
-    const sourceX = ((event.clientX - bounds.left) / bounds.width) * vehicle.width;
-    const sourceY = ((event.clientY - bounds.top) / bounds.height) * vehicle.height;
-    const col = Math.floor((sourceX - vehicle.gridX) / vehicle.cellSize);
-    const row = Math.floor((sourceY - vehicle.gridY) / vehicle.cellSize);
-    const validation = validateBuild(gameData.selectedComponents, gameData.selectedVehicle, {
-      componentId: dragged.componentId,
-      instanceId: dragged.instanceId,
-      col,
-      row
-    });
-    gameData.activeDrag = null;
-    transporterGrid.querySelector('.truck-rig')?.classList.remove('is-interacting');
-    if (!validation.valid) {
-      builderFeedback.textContent = validation.message;
-      return;
-    }
-    commitBuild(gameData.selectedComponents, validation);
-    builderFeedback.textContent = `${dragged.name} moved to column ${col + 1}, row ${row + 1}.`;
+function finishDrag(x, y) {
+  const dragged = gameData.activeDrag;
+  endDragVisual();
+  if (!dragged) return;
+  const cell = getDropCell(x, y, dragged.name);
+  if (!cell) {
+    if (dragged.action === 'move') removePlacedComponent(dragged);
+    else builderFeedback.textContent = '';
     return;
   }
-
-  const art = transporterGrid.querySelector('.truck-rig');
-  const vehicle = gameData.vehicles[gameData.selectedVehicle];
-  if (!art || !vehicle) return;
-
-  let draggedComponent;
-  try {
-    draggedComponent = JSON.parse(event.dataTransfer.getData('application/json'));
-  } catch {
-    builderFeedback.textContent = 'That component could not be placed. Please drag it from the component list.';
-    return;
-  }
-
-  const item = (gameData.catalog[draggedComponent.category] || [])
-    .find((component) => component.name === draggedComponent.name);
-  if (!item) {
-    builderFeedback.textContent = 'That component could not be placed because it is not in the component list.';
-    return;
-  }
-
-  const artBounds = art.getBoundingClientRect();
-  const sourceX = ((event.clientX - artBounds.left) / artBounds.width) * vehicle.width;
-  const sourceY = ((event.clientY - artBounds.top) / artBounds.height) * vehicle.height;
-  const col = Math.floor((sourceX - vehicle.gridX) / vehicle.cellSize);
-  const row = Math.floor((sourceY - vehicle.gridY) / vehicle.cellSize);
-  if (col < 0 || row < 0 || col >= vehicle.columns || row >= vehicle.rows) {
-    builderFeedback.textContent = 'Drop the component inside an open transporter grid cell.';
-    return;
-  }
-
-  let instanceNumber = 1;
-  if (draggedComponent.category === 'pollinator') {
-    const select = Array.from(document.querySelectorAll('select[data-category="pollinator"]'))
-      .find((control) => control.dataset.name === item.name);
-    if (!select || Number(select.value) >= 10) {
-      builderFeedback.textContent = 'The maximum quantity for this pollinator squad is already selected.';
-      return;
-    }
-    instanceNumber = Number(select.value) + 1;
-    select.value = String(instanceNumber);
-  } else if (draggedComponent.category === 'other') {
-    const checkbox = Array.from(document.querySelectorAll('input[name="other"]'))
-      .find((control) => control.value === item.name);
-    if (!checkbox) return;
-    checkbox.checked = true;
-  } else {
-    const radio = Array.from(document.querySelectorAll(`input[name="${draggedComponent.category}"]`))
-      .find((control) => control.value === item.name);
-    if (!radio) return;
-    radio.checked = true;
-  }
-
-  gameData.pendingDrop = {
-    componentId: getComponentId(item.name),
-    instanceId: `${getComponentId(item.name)}-${instanceNumber}`,
-    col,
-    row
-  };
-  updateSelectedComponents();
-}
-
-function handleComponentDragEnd(event) {
-  event.target.closest('.component-card')?.classList.remove('is-dragging');
-  event.target.closest('.placed-component')?.classList.remove('is-dragging');
-  gameData.activeDrag = null;
-  transporterGrid.classList.remove('is-drop-target');
-  transporterGrid.querySelector('.placement-preview')?.remove();
-}
-
-function changeVehicle() {
-  const requestedVehicle = vehicleChoice.value;
-  const validation = validateBuild(gameData.selectedComponents, requestedVehicle);
-  if (!validation.valid) {
+  const { drop, validation } = getDropValidation(dragged, cell.col, cell.row);
+  if (!drop || !validation.valid) {
+    builderFeedback.classList.add('is-error');
     builderFeedback.textContent = validation.message;
-    vehicleChoice.value = gameData.selectedVehicle;
+    flashCardRejected(findCard(dragged.category, dragged.name));
     return;
   }
-  commitBuild(gameData.selectedComponents, validation, requestedVehicle);
+  applyProposal(drop.proposal, {
+    preferred: { ...drop.preferredPlacement, ...cell },
+    message: dragged.action === 'move'
+      ? `${dragged.name} moved.`
+      : `${dragged.name} loaded onto the transporter.`
+  });
+}
+
+function endDragVisual() {
+  dragState.ghost?.remove();
+  dragState.ghost = null;
+  dragState.source?.classList.remove('is-dragging');
+  dragState.source = null;
+  gameData.activeDrag = null;
+  document.body.classList.remove('is-dragging-part');
+  transporterGrid.classList.remove('is-drop-target');
+  transporterGrid.querySelector('.placement-preview')?.remove();
+  transporterGrid.querySelector('.truck-rig')?.classList.remove('is-interacting');
+}
+
+function changeVehicle(requestedVehicle = vehicleChoice.value) {
+  if (!gameData.vehicles[requestedVehicle]) return;
+  if (requestedVehicle === gameData.selectedVehicle) {
+    renderCardStates();
+    return;
+  }
+  const label = gameData.vehicles[requestedVehicle].label || `${requestedVehicle} transporter`;
+  const ok = applyProposal(cloneSelection(), {
+    vehicleId: requestedVehicle,
+    message: `Switched to the ${label}.`,
+    card: document.querySelector(`.component-card[data-vehicle-id="${requestedVehicle}"]`)
+  });
+  if (!ok) {
+    builderFeedback.textContent = `${builderFeedback.textContent} Remove some parts before switching to the ${label}.`;
+  }
 }
 
 function updateStats() {
@@ -1132,7 +1208,7 @@ function renderTransporterGrid() {
     createVehicleRig(gameData.selectedVehicle, { journey: false, interactive: true })
   );
   document.getElementById('layout-note').textContent =
-    'Components are automatically packed largest-first using a bounded backtracking search. A failed search may not prove that no possible layout exists.';
+    'Tap a card to load it, or drag it onto the truck where you want it. Drag a part off the truck (or tap its ×) to remove it.';
   updateTransporterAppearance();
 }
 
@@ -1199,7 +1275,27 @@ function createVehicleRig(vehicleId, { journey = false, interactive = false } = 
     component.dataset.category = item.category;
     component.dataset.name = item.name;
     component.dataset.instanceId = item.instanceId;
-    component.draggable = interactive;
+    component.draggable = false;
+    if (interactive) {
+      component.addEventListener('pointerdown', (event) => beginPointerDrag(event, {
+        category: item.category,
+        name: item.name,
+        instanceId: item.instanceId,
+        source: 'placed',
+        el: component
+      }));
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'placed-component__remove';
+      remove.setAttribute('aria-label', `Remove ${item.name}`);
+      remove.textContent = '×';
+      remove.addEventListener('pointerdown', (event) => event.stopPropagation());
+      remove.addEventListener('click', (event) => {
+        event.stopPropagation();
+        removePlacedComponent(item);
+      });
+      component.appendChild(remove);
+    }
     component.style.left = `${((vehicle.gridX + item.col * vehicle.cellSize) / vehicle.width) * 100}%`;
     component.style.top = `${((vehicle.gridY + item.row * vehicle.cellSize) / vehicle.height) * 100}%`;
     component.style.width = `${(item.width * vehicle.cellSize / vehicle.width) * 100}%`;
@@ -1268,8 +1364,8 @@ function validateSelections() {
 }
 
 async function loadRouteData() {
-  const routeResponse = await fetch('data/enriched_pollination_route.json');
-  const eventsResponse = await fetch('data/events.json');
+  const routeResponse = await fetch('data/enriched_pollination_route.json', { cache: 'no-cache' });
+  const eventsResponse = await fetch('data/events.json', { cache: 'no-cache' });
   if (!routeResponse.ok || !eventsResponse.ok) {
     throw new Error('Unable to load route and random-event data.');
   }
@@ -3183,24 +3279,25 @@ function hideFixDialog() {
 }
 
 function addOtherByName(name) {
-  const cb = document.querySelector(`input[name="other"][value="${name}"]`);
-  if (!cb) return;
-  if (!cb.checked) { cb.checked = true; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+  if (hasSelectedComponent(name)) return;
+  const item = findCatalogItem('other', name);
+  if (!item) return;
+  const proposal = cloneSelection();
+  proposal.other.push({ ...item });
+  applyProposal(proposal, { message: `${name} added.` });
 }
 
 function removeOtherByName(name) {
-  const cb = document.querySelector(`input[name="other"][value="${name}"]`);
-  if (!cb) return;
-  if (cb.checked) { cb.checked = false; cb.dispatchEvent(new Event('change', { bubbles: true })); }
+  if (!hasSelectedComponent(name)) return;
+  const proposal = cloneSelection();
+  proposal.other = proposal.other.filter((item) => item.name !== name);
+  applyProposal(proposal, { message: `${name} removed.` });
 }
 
 function removeRobotPollinators() {
-  document.querySelectorAll('select[data-category="pollinator"]').forEach((sel) => {
-    if (ROBOT_POLLINATORS.has(sel.dataset.name) && Number(sel.value) > 0) {
-      sel.value = '0';
-      sel.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-  });
+  const proposal = cloneSelection();
+  proposal.pollinator = proposal.pollinator.filter((item) => !ROBOT_POLLINATORS.has(item.name));
+  applyProposal(proposal, { message: 'Robot crew removed.' });
 }
 
 // ---------- Builder onboarding dismiss ----------
@@ -3216,6 +3313,7 @@ function removeRobotPollinators() {
 
 // ---------- Builder wizard (one step at a time) ----------
 const WIZARD_STEPS = [
+  { key: 'vehicle',   label: 'Truck',      required: true,  hint: 'Choose your transporter size.' },
   { key: 'control',   label: 'Control',    required: true,  hint: 'Pick a control system — your truck’s brain.' },
   { key: 'engine',    label: 'Engine',     required: true,  hint: 'Pick an engine or power source.' },
   { key: 'pollinator', label: 'Crew',      required: true,  hint: 'Add at least one pollinator crew with the + button.' },
@@ -3229,6 +3327,8 @@ function initBuilderWizard() {
   builder.classList.add('is-wizard');
   renderWizardSteps();
   showWizardStep(0);
+  if (builder.dataset.wizardBound) return;
+  builder.dataset.wizardBound = 'true';
   document.getElementById('wizard-next-btn')?.addEventListener('click', () => {
     if (!canAdvance()) return;
     if (wizardIndex < WIZARD_STEPS.length - 1) {
@@ -3261,6 +3361,9 @@ function showWizardStep(i) {
   const step = WIZARD_STEPS[wizardIndex];
   document.querySelectorAll('.component-group').forEach((fs) => fs.classList.remove('is-active-step'));
   document.querySelectorAll(`.component-group--${step.key}`).forEach((fs) => fs.classList.add('is-active-step'));
+  [componentSelectionLeft, componentSelectionRight].forEach((sidebar) => {
+    sidebar.hidden = !sidebar.querySelector('.component-group.is-active-step');
+  });
   document.querySelectorAll('.wizard-step').forEach((el, idx) => {
     el.classList.toggle('is-active', idx === wizardIndex);
     el.classList.toggle('is-done', idx < wizardIndex);
@@ -3277,6 +3380,7 @@ function showWizardStep(i) {
 function canAdvance() {
   const step = WIZARD_STEPS[wizardIndex];
   if (!step.required) return true;
+  if (step.key === 'vehicle') return Boolean(gameData.vehicles[gameData.selectedVehicle]);
   if (step.key === 'control') return !!gameData.selectedComponents.control;
   if (step.key === 'engine') return !!gameData.selectedComponents.engine;
   if (step.key === 'pollinator') return gameData.selectedComponents.pollinator.length > 0;

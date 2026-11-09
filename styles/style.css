@@ -2617,3 +2617,172 @@ button {
   .event-choice { padding: 1rem; }
 }
 
+
+/* =====================================================================
+   BUILDER v2 — state-driven cards, pointer drag & drop
+   ===================================================================== */
+.component-card {
+  touch-action: pan-y;
+}
+
+.component-card:focus-visible {
+  outline: 3px solid var(--gtac-cobalt);
+  outline-offset: 2px;
+}
+
+.component-quip {
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-style: italic;
+  color: #5b5f55;
+  line-height: 1.25;
+}
+
+.component-blocked-reason:empty { display: none; }
+
+.component-blocked-reason {
+  align-self: flex-start;
+  margin-top: 0.15rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 109, 58, 0.15);
+  color: #b2401a !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+}
+
+.component-card.is-blocked:not(.is-selected) img { opacity: 0.55; }
+
+.component-card.is-rejected {
+  animation: card-reject 0.45s ease;
+  border-color: var(--gtac-flame);
+}
+
+@keyframes card-reject {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.builder-feedback.is-error {
+  color: #b2401a;
+  font-weight: 800;
+}
+
+body.is-dragging-part,
+body.is-dragging-part * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
+.drag-ghost {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(-3deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--gtac-green-dark);
+  border-radius: 6px;
+  background: rgba(249, 246, 231, 0.92);
+  box-shadow: 0 12px 24px rgba(39, 42, 36, 0.3);
+  transition: transform 0.12s ease;
+}
+
+.drag-ghost.is-over-truck {
+  opacity: 0.35;
+  transform: translate(-50%, -50%);
+}
+
+.drag-ghost img {
+  width: 85%;
+  height: 85%;
+  object-fit: contain;
+}
+
+#transporter-grid .placed-component:not(.placement-preview) {
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+.placed-component.is-dragging { opacity: 0.3; }
+
+.placement-preview {
+  z-index: 6;
+  background: rgba(0, 188, 116, 0.35);
+  border: 2px dashed var(--gtac-green-dark);
+  pointer-events: none;
+}
+
+.placement-preview.is-invalid {
+  background: rgba(255, 109, 58, 0.4);
+  border-color: var(--gtac-flame);
+}
+
+.placed-component__remove {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  z-index: 3;
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--gtac-flame);
+  color: white;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 900;
+  opacity: 0;
+  pointer-events: auto;
+  transition: opacity 0.15s ease;
+}
+
+#transporter-grid .placed-component:hover .placed-component__remove,
+#transporter-grid .placed-component:focus-within .placed-component__remove {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .placed-component__remove { opacity: 0.9; }
+}
+
+.component-group--vehicle .component-card img {
+  width: 84px;
+  object-fit: contain;
+}
+
+/* Wizard layout: truck + the active step's cards only. */
+#vehicle-builder.is-wizard .builder-workspace {
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+  grid-template-areas: "center side";
+}
+
+#vehicle-builder.is-wizard .component-sidebar {
+  grid-area: side;
+}
+
+#vehicle-builder.is-wizard .component-sidebar[hidden] {
+  display: none;
+}
+
+#vehicle-builder.is-wizard .transporter-preview {
+  position: sticky;
+  top: 0.75rem;
+  align-self: start;
+}
+
+@media (max-width: 700px) {
+  #vehicle-builder.is-wizard .builder-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "center" "side";
+  }
+  #vehicle-builder.is-wizard .transporter-preview {
+    position: static;
+  }
+}

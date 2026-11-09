@@ -1,4 +1,33 @@
 {
+  "vehicle": [
+    {
+      "id": "small",
+      "name": "Small Transporter",
+      "type": "vehicle",
+      "cost": 5000,
+      "speedMultiplier": 1.1,
+      "power": 0,
+      "notes": "Cheap and nippy (10% faster), but only 24 cargo spaces."
+    },
+    {
+      "id": "medium",
+      "name": "Medium Transporter",
+      "type": "vehicle",
+      "cost": 12000,
+      "speedMultiplier": 1.0,
+      "power": 0,
+      "notes": "The all-rounder: 30 cargo spaces at normal speed."
+    },
+    {
+      "id": "large",
+      "name": "Large Transporter",
+      "type": "vehicle",
+      "cost": 20000,
+      "speedMultiplier": 0.85,
+      "power": 0,
+      "notes": "36 cargo spaces, but it lumbers along 15% slower."
+    }
+  ],
   "control": [
     {
       "name": "AI Controlled",
@@ -92,7 +121,10 @@
       "name": "Honey Bee Hive",
       "type": "pollinator",
       "efficiency": 1.0,
-      "quantityRange": [20000, 80000],
+      "quantityRange": [
+        20000,
+        80000
+      ],
       "weatherDamage": true,
       "notes": "Each Hive will have a random number of bees (between 20000 to 80000). Population will drop by half after 30 days. Extreme weather can damage the hive and cause more bee death.",
       "cost": 1000,
@@ -113,7 +145,10 @@
       "name": "Smart Hive",
       "type": "pollinator",
       "efficiency": 1.0,
-      "quantityRange": [15000, 60000],
+      "quantityRange": [
+        15000,
+        60000
+      ],
       "immuneToWeather": true,
       "notes": "Population will drop by half after 60 days. Extreme weather does no damage the hive. Random number of between 15000 and 60000 bees.",
       "cost": 3000,
