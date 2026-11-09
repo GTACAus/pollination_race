@@ -72,6 +72,10 @@ const SIMULATION_RULES = {
   }
 };
 const MAX_EVENT_SUCCESS_PROBABILITY = 0.95;
+// Grant Grab: random base funding, topped up by the mini-game.
+const FUNDING_RULES = { baseMin: 60000, baseMax: 72000, maxBonus: 25000 };
+// Pollen Rush: a perfect round boosts that site's pollination by this much.
+const POLLEN_RUSH_MAX_BONUS_PCT = 15;
 const ROBOT_POLLINATORS = new Set(['Robot Forager', 'Robot Scout', 'Robot Pollinator']);
 
 const routeMapPositions = [
@@ -151,7 +155,12 @@ const gameData = {
   repairPausedSimulation: false,
   transporterMotion: 'driving',
   transporterGridVisible: true,
-  reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  grantFunding: null,
+  grantBonus: 0,
+  pollenRushPlayed: new Set(),
+  pollenRushResults: [],
+  pollenRushSkipAll: false
 };
 
 async function init() {
@@ -242,13 +251,43 @@ function scheduleJourney(delay) {
   }, delay * JOURNEY_PACE);
 }
 
-function startGame() {
+async function startGame() {
   titleScreen.classList.add('hidden');
-  builderScreen.classList.remove('hidden');
+  builderScreen.classList.add('hidden');
   mapScreen.classList.add('hidden');
+  await runFundingRound();
+  builderScreen.classList.remove('hidden');
   resetBuild();
   generateBudget();
   loadComponents().then(() => initBuilderWizard());
+}
+
+async function runFundingRound() {
+  const grantScreen = document.getElementById('grant-screen');
+  const skipButton = document.getElementById('grant-skip-btn');
+  const step = 1000;
+  const base = FUNDING_RULES.baseMin +
+    Math.floor(Math.random() * ((FUNDING_RULES.baseMax - FUNDING_RULES.baseMin) / step + 1)) * step;
+  document.getElementById('grant-base').textContent = base.toLocaleString();
+  document.getElementById('grant-max').textContent = FUNDING_RULES.maxBonus.toLocaleString();
+  skipButton.textContent = 'Skip — use base funding';
+  grantScreen.classList.remove('hidden');
+  window.scrollTo(0, 0);
+  let result = { finalFunding: base, bonusFunding: 0, skipped: true };
+  if (window.Minigames) {
+    result = await window.Minigames.runGrantGrab({
+      container: document.getElementById('grant-container'),
+      skipButton,
+      initialFunding: base,
+      maxBonus: FUNDING_RULES.maxBonus
+    });
+  }
+  grantScreen.classList.add('hidden');
+  gameData.grantFunding = result.finalFunding;
+  gameData.grantBonus = result.bonusFunding || 0;
+  if (gameData.grantBonus > 0) {
+    showToast(`Grant Grab won you an extra $${gameData.grantBonus.toLocaleString()}! Total budget: $${result.finalFunding.toLocaleString()}.`, { tone: 'success', durationMs: 5000 });
+  }
 }
 
 function resetBuild() {
@@ -275,7 +314,8 @@ function toggleInstructions() {
 }
 
 function generateBudget() {
-  gameData.budget = 90000 + Math.floor(Math.random() * 30000);
+  gameData.budget = gameData.grantFunding ??
+    (FUNDING_RULES.baseMin + Math.floor(Math.random() * (FUNDING_RULES.baseMax - FUNDING_RULES.baseMin)));
   gameData.budgetRemaining = gameData.budget;
   updateStats();
 }
@@ -1511,6 +1551,9 @@ function continueStartRoute() {
   gameData.missionFailed = false;
   gameData.missionFailureReason = '';
   gameData.missionEndedAt = '';
+  gameData.pollenRushPlayed = new Set();
+  gameData.pollenRushResults = [];
+  gameData.pollenRushSkipAll = false;
   gameData.encounteredEventIds = new Set();
   gameData.segmentEventIds = new Set();
   gameData.phaseEventKeys = new Set();
@@ -1626,6 +1669,18 @@ function runJourney() {
   if (gameData.currentPhase === 'pollination-check') {
     const stop = gameData.route[gameData.routeIndex];
     if ((stop.stopDurationDays || 0) > 0 && tryTriggerPhaseEvent('pollination', stop)) return;
+    gameData.currentPhase = 'pollen-rush';
+  }
+  if (gameData.currentPhase === 'pollen-rush') {
+    const stop = gameData.route[gameData.routeIndex];
+    const index = gameData.routeIndex;
+    if ((stop.stopDurationDays || 0) > 0 && !gameData.pollenRushPlayed.has(index)) {
+      gameData.pollenRushPlayed.add(index);
+      offerPollenRush(stop, index).then(() => {
+        if (!gameData.missionFailed) scheduleJourney(200);
+      });
+      return;
+    }
     gameData.currentPhase = 'pollination';
   }
   if (gameData.currentPhase === 'pollination') {
@@ -2915,6 +2970,108 @@ function calculateNormalChargingHours(stop) {
     return total + Math.ceil(getPopulationTotals(selected.name).active / capacityPerBatch) *
       cycles * chargeTime;
   }, 0);
+}
+
+// ---------- Pollen Rush (optional, once per pollination site) ----------
+function offerPollenRush(stop, index) {
+  if (gameData.pollenRushSkipAll || !window.Minigames) {
+    gameData.pollenRushResults.push({ index, region: stop.region, played: false, bonusPct: 0 });
+    return Promise.resolve();
+  }
+  const overlay = document.getElementById('pollen-rush-overlay');
+  const container = document.getElementById('pollen-rush-container');
+  const playBtn = document.getElementById('pollen-rush-play');
+  const skipBtn = document.getElementById('pollen-rush-skip');
+  const skipAll = document.getElementById('pollen-rush-skip-all');
+  const resultEl = document.getElementById('pollen-rush-result');
+  document.getElementById('pollen-rush-site').textContent = stop.region;
+  document.getElementById('pollen-rush-max').textContent = String(POLLEN_RUSH_MAX_BONUS_PCT);
+  container.replaceChildren();
+  resultEl.classList.add('hidden');
+  resultEl.replaceChildren();
+  playBtn.classList.remove('hidden');
+  skipBtn.classList.remove('hidden');
+  skipBtn.textContent = 'Skip';
+  skipAll.checked = false;
+  skipAll.parentElement.classList.remove('hidden');
+  overlay.classList.remove('hidden');
+  locationStage.classList.add('is-paused');
+  freezeTruck();
+  playBtn.focus();
+
+  return new Promise((resolve) => {
+    let state = 'offer';
+    const close = (bonusPct, played) => {
+      playBtn.onclick = null;
+      skipBtn.onclick = null;
+      window.Minigames.runPollenRush.current?.destroy();
+      container.replaceChildren();
+      overlay.classList.add('hidden');
+      if (!gameData.currentEvent && repairPanel.classList.contains('hidden')) {
+        locationStage.classList.remove('is-paused');
+      }
+      gameData.pollenRushResults.push({ index, region: stop.region, played, bonusPct });
+      resolve();
+    };
+    const applyResult = (result) => {
+      const performance = Math.max(0, Math.min(1, Number(result.performanceIndex) || 0));
+      const bonusPct = result.played ? Math.round(performance * POLLEN_RUSH_MAX_BONUS_PCT * 10) / 10 : 0;
+      if (bonusPct > 0) {
+        gameData.siteOutputMultipliers[index] *= 1 + bonusPct / 100;
+        addLogEntry(`Pollen Rush at ${stop.region}: ${result.bankedScore} points banked — pollination boosted by ${bonusPct}%.`);
+        refreshJourneyStatus();
+        animatePollenEvent(bonusPct);
+      } else if (result.played) {
+        addLogEntry(`Pollen Rush at ${stop.region}: no points banked, so no bonus this time.`);
+      }
+      return bonusPct;
+    };
+
+    skipBtn.onclick = () => {
+      if (skipAll.checked) gameData.pollenRushSkipAll = true;
+      if (state === 'playing') {
+        window.Minigames.runPollenRush.current?.skip();
+        return;
+      }
+      if (state === 'done') return;
+      addLogEntry(`Pollen Rush skipped at ${stop.region}.`);
+      close(0, false);
+    };
+
+    playBtn.onclick = () => {
+      state = 'playing';
+      playBtn.classList.add('hidden');
+      skipAll.parentElement.classList.add('hidden');
+      skipBtn.textContent = 'Stop and skip bonus';
+      window.Minigames.runPollenRush({
+        container,
+        siteId: `site_${index}`
+      }).then((result) => {
+        state = 'done';
+        const bonusPct = applyResult(result);
+        if (!result.played) {
+          close(0, false);
+          return;
+        }
+        resultEl.replaceChildren();
+        const msg = document.createElement('p');
+        msg.innerHTML = bonusPct > 0
+          ? `<strong>${result.bankedScore.toLocaleString()} points banked!</strong> Pollination at ${stop.region} boosted by <strong>+${bonusPct}%</strong>.`
+          : '<strong>No points banked</strong> — remember to return pollen to the hive before time runs out.';
+        const cont = document.createElement('button');
+        cont.type = 'button';
+        cont.textContent = 'Continue journey ▶';
+        cont.onclick = () => close(bonusPct, true);
+        resultEl.append(msg, cont);
+        resultEl.classList.remove('hidden');
+        skipBtn.classList.add('hidden');
+        cont.focus();
+      }).catch((error) => {
+        console.error('Pollen Rush failed', error);
+        close(0, false);
+      });
+    };
+  });
 }
 
 function completePollinationAtCurrentStop() {

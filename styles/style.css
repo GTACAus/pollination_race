@@ -2779,3 +2779,96 @@ body.is-dragging-part * {
     bottom: 16%;
   }
 }
+
+/* =====================================================================
+   MINI-GAMES — Grant Grab screen and Pollen Rush overlay
+   ===================================================================== */
+.minigame-screen {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 2rem;
+}
+
+.minigame-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.minigame-header h2 {
+  margin: 0.1rem 0 0.3rem;
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
+}
+
+.minigame-header .eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gtac-green-dark);
+}
+
+.minigame-lead {
+  margin: 0;
+  max-width: 62ch;
+  line-height: 1.4;
+}
+
+.minigame-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.minigame-header__actions button { margin: 0; }
+
+.minigame-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.minigame-container { width: 100%; }
+
+.minigame-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  overflow-y: auto;
+  padding: clamp(0.5rem, 2vw, 1.5rem);
+  background: rgba(20, 33, 25, 0.82);
+  backdrop-filter: blur(4px);
+}
+
+.minigame-overlay__panel {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 1.25rem;
+  border-radius: 18px;
+  background: var(--gtac-eggshell);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.minigame-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+  padding: 0.8rem 1rem;
+  border-radius: 14px;
+  background: var(--gtac-mint);
+  border: 2px solid var(--gtac-green);
+  font-size: 1.05rem;
+}
+
+.minigame-result p { margin: 0; }
+.minigame-result button { margin: 0; }

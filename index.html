@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Great Pollination Race</title>
-  <link rel="stylesheet" href="styles/style.css?v=20261109f" />
+  <link rel="stylesheet" href="styles/style.css?v=20261109h" />
+  <link rel="stylesheet" href="minigames/grant-grab/grant-grab.css" />
 </head>
 <body>
   <div id="title-screen" class="screen">
@@ -15,6 +16,18 @@
       <p>Help pollinate Victoria! Build your transporter, manage power and budget, and navigate hazards.</p>
       <p>Choose a control system, engine, pollinator crew, and support equipment before setting off.</p>
     </div>
+  </div>
+
+  <div id="grant-screen" class="screen minigame-screen hidden" aria-labelledby="grant-title">
+    <header class="minigame-header">
+      <div>
+        <p class="eyebrow">Step 1 · Funding</p>
+        <h2 id="grant-title">Grant Grab!</h2>
+        <p class="minigame-lead">Every transporter needs funding. You start with <strong>$<span id="grant-base">0</span></strong> — catch grants for up to <strong>$<span id="grant-max">0</span></strong> extra. Dodge the red rejected applications: they slow you down!</p>
+      </div>
+      <button id="grant-skip-btn" type="button" class="secondary">Skip — use base funding</button>
+    </header>
+    <div id="grant-container" class="minigame-container"></div>
   </div>
 
   <div id="vehicle-builder" class="screen hidden">
@@ -216,6 +229,25 @@
     <button id="new-build-btn" type="button" class="secondary hidden">Build A New Vehicle</button>
   </div>
 
+  <div id="pollen-rush-overlay" class="minigame-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pollen-rush-title">
+    <div class="minigame-overlay__panel">
+      <header class="minigame-header">
+        <div>
+          <p class="eyebrow">Pollination bonus · <span id="pollen-rush-site">this site</span></p>
+          <h2 id="pollen-rush-title">Pollen Rush</h2>
+          <p class="minigame-lead" id="pollen-rush-lead">Fly the bee for 60 seconds: collect pollen, pollinate matching flowers and bank points at the hive. A great round boosts this site's pollination by up to <strong>+<span id="pollen-rush-max">15</span>%</strong>.</p>
+        </div>
+        <div class="minigame-header__actions">
+          <button id="pollen-rush-play" type="button">Play (60 s)</button>
+          <button id="pollen-rush-skip" type="button" class="secondary">Skip</button>
+          <label class="minigame-check"><input id="pollen-rush-skip-all" type="checkbox" /> Skip for the rest of this journey</label>
+        </div>
+      </header>
+      <div id="pollen-rush-container" class="minigame-container"></div>
+      <div id="pollen-rush-result" class="minigame-result hidden" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <div id="tour" class="tour hidden" role="dialog" aria-modal="true" aria-labelledby="tour-title">
@@ -232,6 +264,7 @@
     </div>
   </div>
 
-  <script src="scripts/game.js?v=20261109f"></script>
+  <script src="scripts/minigames.js?v=20261109h"></script>
+  <script src="scripts/game.js?v=20261109h"></script>
 </body>
 </html>
