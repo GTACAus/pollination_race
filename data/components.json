@@ -152,7 +152,7 @@
       "immuneToWeather": true,
       "notes": "15,000–60,000 bees per hive. Numbers only halve after day 60, and weather losses are halved.",
       "cost": 4000,
-      "power": -120
+      "power": -60
     },
     {
       "name": "Robot Scout",
@@ -163,7 +163,7 @@
       "worksAtNight": true,
       "notes": "15,000 robots that work day and night (30% more pollination). Needs Robo-Pollinator Control and a charging station.",
       "cost": 3500,
-      "power": -150
+      "power": -80
     },
     {
       "name": "Robot Pollinator",
@@ -172,8 +172,8 @@
       "quantity": 20000,
       "requiresCharging": true,
       "notes": "20,000 robots, 10% slower than bees, never age and ignore weather. Needs Robo-Pollinator Control and a charging station.",
-      "cost": 2500,
-      "power": -100
+      "cost": 2000,
+      "power": -50
     }
   ],
   "other": [
@@ -212,7 +212,7 @@
       "chargeTimePerBatch": 1,
       "notes": "Charges 10,000 robots per hour. Robots that need charging barely work without a station.",
       "cost": 2000,
-      "power": -160
+      "power": -100
     },
     {
       "name": "Large Charging Station",
@@ -221,7 +221,7 @@
       "chargeTimePerBatch": 1,
       "notes": "Charges 20,000 robots per hour, so charging stops are twice as quick.",
       "cost": 4000,
-      "power": -160
+      "power": -120
     }
   ],
   "gameConfig": {
