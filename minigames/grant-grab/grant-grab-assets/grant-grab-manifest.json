@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "module": "Grant Grab! / The Great Pollination Race",
+  "characters": {
+    "scientist": {
+      "spriteSheet": "characters/scientist_atlas.png",
+      "metadata": "characters/scientist_animations.json"
+    }
+  },
+  "items": {
+    "spriteSheet": "items/funding_items_atlas.png",
+    "metadata": "items/funding_items.json"
+  },
+  "background": {
+    "image": "backgrounds/gtac_lab_background.png",
+    "dimensions": [
+      1672,
+      941
+    ]
+  },
+  "preview": "examples/preview.html",
+  "coordinateSystem": "Pixel frame x/y coordinates start at top-left. Render using pixelated image scaling."
+}

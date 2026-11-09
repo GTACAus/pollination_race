@@ -1,0 +1,140 @@
+{
+  "image": "characters/scientist_atlas.png",
+  "frameWidth": 256,
+  "frameHeight": 320,
+  "columns": 5,
+  "rows": 2,
+  "frameCount": 10,
+  "frames": {
+    "idle_open": {
+      "index": 0,
+      "x": 0,
+      "y": 0,
+      "width": 256,
+      "height": 320
+    },
+    "idle_blink": {
+      "index": 1,
+      "x": 256,
+      "y": 0,
+      "width": 256,
+      "height": 320
+    },
+    "walk_step_a": {
+      "index": 2,
+      "x": 512,
+      "y": 0,
+      "width": 256,
+      "height": 320
+    },
+    "walk_step_b": {
+      "index": 3,
+      "x": 768,
+      "y": 0,
+      "width": 256,
+      "height": 320
+    },
+    "rejected": {
+      "index": 4,
+      "x": 1024,
+      "y": 0,
+      "width": 256,
+      "height": 320
+    },
+    "idle_breathe": {
+      "index": 5,
+      "x": 0,
+      "y": 320,
+      "width": 256,
+      "height": 320
+    },
+    "walk_step_a_lift": {
+      "index": 6,
+      "x": 256,
+      "y": 320,
+      "width": 256,
+      "height": 320
+    },
+    "walk_step_b_lift": {
+      "index": 7,
+      "x": 512,
+      "y": 320,
+      "width": 256,
+      "height": 320
+    },
+    "rejected_flash": {
+      "index": 8,
+      "x": 768,
+      "y": 320,
+      "width": 256,
+      "height": 320
+    },
+    "rejected_recover": {
+      "index": 9,
+      "x": 1024,
+      "y": 320,
+      "width": 256,
+      "height": 320
+    }
+  },
+  "animations": {
+    "idle": {
+      "frames": [
+        0,
+        5,
+        0,
+        1,
+        0
+      ],
+      "durationsMs": [
+        360,
+        300,
+        390,
+        130,
+        380
+      ],
+      "loop": true
+    },
+    "walk": {
+      "frames": [
+        2,
+        6,
+        3,
+        7
+      ],
+      "durationsMs": [
+        135,
+        135,
+        135,
+        135
+      ],
+      "loop": true
+    },
+    "rejected": {
+      "frames": [
+        4,
+        8,
+        4,
+        9
+      ],
+      "durationsMs": [
+        160,
+        140,
+        180,
+        160
+      ],
+      "loop": true
+    }
+  },
+  "origin": {
+    "x": 0.5,
+    "y": 0.96
+  },
+  "collectionZone": {
+    "x": 0.3,
+    "y": 0.48,
+    "width": 0.4,
+    "height": 0.1
+  },
+  "note": "Collection zone is an initial visual estimate; validate against your game collision detection. Left/right locomotion can reuse these front-facing poses."
+}

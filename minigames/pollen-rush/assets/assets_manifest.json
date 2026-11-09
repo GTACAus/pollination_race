@@ -1,0 +1,159 @@
+{
+  "version": "1.1.0",
+  "unit": "px",
+  "pixelArt": true,
+  "filter": "nearest",
+  "recommendedCanvas": {
+    "width": 960,
+    "height": 540
+  },
+  "spriteSheets": {
+    "bee": {
+      "path": "sprites/bee_flying_48.png",
+      "frameWidth": 48,
+      "frameHeight": 48,
+      "columns": 12,
+      "rows": 4,
+      "rowLabels": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
+      "frameCountPerRow": 12,
+      "fps": 12.5,
+      "source": "source/Bee-Animated.gif",
+      "notes": "Left-facing original; right mirrored; up/down are rotated approximations."
+    },
+    "beePollenOverlay": {
+      "path": "sprites/bee_pollen_overlay_48.png",
+      "frameWidth": 48,
+      "frameHeight": 48,
+      "columns": 6,
+      "rows": 4,
+      "rowLabels": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
+      "columnLabels": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "notes": "Customised to user-provided bee sprite; rows match bee directions."
+    },
+    "beeHurt": {
+      "path": "sprites/bee_hurt_48.png",
+      "frameWidth": 48,
+      "frameHeight": 48,
+      "columns": 4,
+      "rows": 1,
+      "fps": 12,
+      "notes": "Damage flashes generated from user-provided bee."
+    },
+    "hive": {
+      "path": "sprites/hive_64.png",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "columns": 4,
+      "rows": 4,
+      "rowLabels": [
+        "idle",
+        "active",
+        "deposit",
+        "highlight"
+      ],
+      "fps": 6
+    },
+    "props": {
+      "path": "sprites/meadow_props_32.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "columns": 8,
+      "rows": 1,
+      "columnLabels": [
+        "grass_tuft_a",
+        "grass_tuft_b",
+        "grass_tuft_c",
+        "small_plant",
+        "pebble_a",
+        "pebble_b",
+        "dirt_patch",
+        "tiny_daisy"
+      ]
+    }
+  },
+  "flowerStates": [
+    "bud",
+    "opening",
+    "bloom",
+    "visited",
+    "wilting",
+    "spent"
+  ],
+  "flowerSpecies": {
+    "pink": {
+      "path": "sprites/flower_pink_32.png",
+      "icon": "sprites/flower_pink_icon_64.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "columns": 4,
+      "rows": 6,
+      "rowLabels": [
+        "bud",
+        "opening",
+        "bloom",
+        "visited",
+        "wilting",
+        "spent"
+      ],
+      "fps": 5
+    },
+    "blue": {
+      "path": "sprites/flower_blue_32.png",
+      "icon": "sprites/flower_blue_icon_64.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "columns": 4,
+      "rows": 6,
+      "rowLabels": [
+        "bud",
+        "opening",
+        "bloom",
+        "visited",
+        "wilting",
+        "spent"
+      ],
+      "fps": 5
+    },
+    "yellow": {
+      "path": "sprites/flower_yellow_32.png",
+      "icon": "sprites/flower_yellow_icon_64.png",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "columns": 4,
+      "rows": 6,
+      "rowLabels": [
+        "bud",
+        "opening",
+        "bloom",
+        "visited",
+        "wilting",
+        "spent"
+      ],
+      "fps": 5
+    }
+  },
+  "backgrounds": {
+    "meadow": "backgrounds/meadow_tile_seamless_256.png",
+    "plain": "backgrounds/meadow_tile_plain_256.png"
+  },
+  "sources": {
+    "bee": "source/Bee-Animated.gif"
+  }
+}

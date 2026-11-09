@@ -1,0 +1,72 @@
+export const CONFIG = Object.freeze({
+  canvas: Object.freeze({ width: 960, height: 540 }),
+  gameDurationSeconds: 60,
+  performanceTargetScore: 500,
+  countdownSeconds: 3,
+  movementSpeed: 240,
+  beeRadius: 13,
+  beeFrameWidth: 48,
+  beeFrameHeight: 48,
+  beeAnimationFps: 12.5,
+  waspAnimationFps: 1000 / 95,
+  waspFrameWidth: 48,
+  waspFrameHeight: 48,
+  pollenCapacity: 5,
+  speedPenaltyPerPollen: 0.05,
+  flowerSpawnInterval: 2.25,
+  maximumFlowers: 12,
+  minimumFlowers: 8,
+  flowerBudDuration: 1.3,
+  flowerOpeningDuration: 0.9,
+  flowerBloomDurationMin: 18,
+  flowerBloomDurationMax: 25,
+  flowerVisitedDuration: 1.5,
+  flowerWiltingDuration: 3.2,
+  flowerSpentDuration: 2.4,
+  flowerFrameFps: 5,
+  flowerRadius: 14,
+  flowerKeepAwayFromHive: 84,
+  flowerKeepAwayFromEdge: 50,
+  flowerKeepAwayFromFlowers: 54,
+  pollinationMarkerLifetime: 12,
+  collectionPoints: 10,
+  pollinationPoints: 20,
+  comboMultipliers: Object.freeze([1, 1.5, 2]),
+  hiveDepositRadius: 42,
+  hiveFrameFps: 6,
+  phases: Object.freeze({
+    pestAlertStart: 30,
+    superBloomStart: 40,
+    alertBannerDuration: 3.2,
+    superBloomBannerDuration: 3.2
+  }),
+  wasps: Object.freeze({
+    secondSpawnTime: 36,
+    maximum: 2,
+    patrolSpeed: 62,
+    pursuitSpeed: 88,
+    detectionRadius: 170,
+    collisionRadius: 13,
+    spawnBeeClearance: 145,
+    hiveSafeRadius: 112,
+    immunitySeconds: 2,
+    scoreLossFraction: 0.2
+  }),
+  basketWarnings: Object.freeze({
+    nearlyFullAt: 4,
+    fullAt: 5
+  }),
+  superBloom: Object.freeze({
+    spawnInterval: 1.15,
+    maximumFlowers: 16,
+    scoreMultiplier: 2,
+    collectionParticleCount: 11,
+    pollinationParticleCount: 16
+  }),
+  effects: Object.freeze({
+    maximumParticles: 180,
+    damageParticleCount: 10,
+    depositParticleCount: 14
+  }),
+  species: Object.freeze(["pink", "blue", "yellow"])
+});

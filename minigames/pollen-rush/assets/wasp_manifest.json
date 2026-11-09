@@ -1,0 +1,29 @@
+{
+  "pack": "Pollen Rush Wasp Animation Pack v1.0",
+  "master_sheet": "sprites/wasp_flying_48.png",
+  "frameWidth": 48,
+  "frameHeight": 48,
+  "frameCountPerDirection": 12,
+  "columns": 12,
+  "rows": 4,
+  "animationFrameDurationMs": 95,
+  "rowMap": {
+    "down": 0,
+    "up": 1,
+    "left": 2,
+    "right": 3
+  },
+  "directionSheets": {
+    "down": "sprites/wasp_down_48.png",
+    "up": "sprites/wasp_up_48.png",
+    "left": "sprites/wasp_left_48.png",
+    "right": "sprites/wasp_right_48.png"
+  },
+  "gifPreviews": {
+    "down": "gifs/wasp_down_animated.gif",
+    "up": "gifs/wasp_up_animated.gif",
+    "left": "gifs/wasp_left_animated.gif",
+    "right": "gifs/wasp_right_animated.gif"
+  },
+  "notes": "Frames extracted from generated original artwork with transparency and packed at 48px. GIFs are previews; use the PNG atlas for HTML Canvas rendering."
+}
