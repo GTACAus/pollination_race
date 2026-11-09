@@ -1,0 +1,5 @@
+# Local scratch: extracted source zips and packages
+_zip/
+_pkg/
+# Local editor / Claude settings
+.claude/
